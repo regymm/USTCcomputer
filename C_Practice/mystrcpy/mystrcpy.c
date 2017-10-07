@@ -20,9 +20,8 @@
 
 char* mystrcpy(char* dest, const char* src)
 {
-	size_t i = -1;
-	while(src[++i]) dest[i] = src[i];
-	dest[i++] = '\0';
+	size_t i = 0;
+	while(dest[i] = src[i]) i++;
 	return dest;
 }
 
