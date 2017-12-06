@@ -19,85 +19,99 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+#include "GoL.h"
 
-//macre defines
-#define BUFSIZE 10000
-#define MAXUILEN 50
-
-#define AUTHOR "guyimin"
-#define INFO "PB17000002"
-#define GITHUB "https://github.com/ustcpetergu"
-//----config--------
-
-//main data
-int CELL_ALIVE_NUM[] = {3, -1};//cell turn from die to alive
-int CELL_KEEP_NUM[] = {2, 3, -1};//keep alive
-int CELL_DIE_NUM[] = {0, 1, 4, 5, 6, 7, 8, -1};//turn to die
-//you can change them for fun
-//-1 means end
-
-//cols and rols
-//default 80 x 24 terminal, last line for status
-int COL = 80;
-int ROW = 23;
-
-//cell ui
-//char ALIVE[MAXUILEN] = "o";
-//char DIE[MAXUILEN] = " ";
-char ALIVE[MAXUILEN] = "\033[47m  \033[0m";
-char DIE[MAXUILEN] = "\033[40m  \033[0m";
-
-//is circle enabled?
-_Bool CIRCLE = 0;
-
-//----config end----
-
-//function list
-void start();
-void welcome();
-void config();
-
-void game();
-
-void end();
-//function list end
-//main varaiables
-typedef struct {
-	_Bool alive;
-	short neighbour;
-}Cell;
-Cell **map;//main cells
-int cellnum;//number of cells
-int alivenum = 0;//number of living cells
-double liverate = 0.0;//percentage of living cells
-//main varaiables end
 void game()
 {
+	if(!(map = (Cell **)malloc(ALL * sizeof(Cell)))){
+		printf("Out of memory!\n");
+		exit(1);
+	}
+	randomize();
+	updatearound();
+	char c;
+	int isgame = 1;
+	clearscreen();
+	while(isgame){
+		updatescreen();
+		updatecell();
+		updatearound();
+		c = getchar();
+		if(c == 'q')
+			isgame = 0;
+	}
 }
-void end()
+void randomize()
 {
+	int i, j;
+	int random;
+	for(i = 0; i < COL; i++)
+		for(j = 0; j < ROW; j++){
+			random = rand();
+			map[i][j].alive = 
+				(random / 65535.0 < PERCENT / 100.0) ? 1 : 0;
+		}
 }
-int main(void)
+void updatearound()
 {
-	start();
-	game();
-	end();
-	return 0;
+	int i, j, k;
+	int around;
+	int dx[] = {1, 1, 1, -1, -1, -1, 0, 0};
+	int dy[] = {1, 0,-1,  1,  0, -1,-1, 1};
+	for(i = 0; i < COL; i++)
+		for(j = 0; j < ROW; j++){
+			map[i][j].neighbour = 0;
+			for(k = 0; k < 8; k++){
+				if(CIRCLE)//circle mode
+				map[i][j].neighbour += 
+				map[(i + dx[k] + COL) % COL][(j + dy[k] + ROW) % ROW].alive;
+				else//border mode
+					if(i + dx[k] > 0 && i + dx[k] <= COL && 
+							j + dy[k] > 0 && j + dy[k] <= ROW)
+						map[i][j].neighbour += 
+							map[i + dx[k]][j + dy[k]].alive;
+			}
+		}
 }
-
+void updatecell()
+{
+	int i, j, k;
+	int changeflag = 0;
+	for(i = 0; i < COL; i++)
+		for(j = 0; j < ROW; j++){
+			k = 0;
+			//come alive
+			while(CELL_ALIVE_NUM[k] != -1){
+				if(map[i][j].neighbour == CELL_ALIVE_NUM[k]){
+					map[i][j].alive = 1;
+					changeflag = 1;
+				}
+				k++;
+			}
+			k = 0;
+			//keep alive
+			while(CELL_KEEP_NUM[k] != -1){
+				if(map[i][j].alive == 1 && 
+						map[i][j].neighbour == CELL_KEEP_NUM[k])
+					changeflag = 1;
+				k++;
+			}
+			//other cases, change to or remain die
+			if(changeflag == 0)
+				map[i][j].alive = 0;
+		}
+}
 void start()
 {
+	srand((unsigned)time(0));
 	welcome();
 	config();
 }
-void welcome(){
-	printf("-----------------------------\n");
-	printf("C Programming Project\n");
-	printf("2017, writen by %s (%s)\n", AUTHOR, INFO);
-	printf("Code also available on %s\n", GITHUB);
-	printf("Game of Life\n");
-	printf("https://en.wikipedia.org/wiki/Conway%%27s_Game_of_Life\n");
-	printf("-----------------------------\n\n");
+void end()
+{
+	free(map);
+	printf("Goodbye!\n");
 }
 void config()
 {
@@ -141,6 +155,7 @@ void config()
 			}
 		}
 	}
+	ALL = COL * ROW;
 	//ui
 	printf("Character for living cells?(max %d)[%s]", MAXUILEN, ALIVE);
 	flag = 1;
@@ -187,4 +202,11 @@ void config()
 		}
 	}
 	printf("config finished.\n");
+}
+int main(void)
+{
+	start();
+	game();
+	end();
+	return 0;
 }
