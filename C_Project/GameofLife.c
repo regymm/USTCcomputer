@@ -20,14 +20,79 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "GoL.h"
 
+//---------------macre defines
+#define BUFSIZE 10000
+#define MAXUILEN 50
+
+#define AUTHOR "guyimin"
+#define INFO "PB17000002"
+#define GITHUB "https://github.com/ustcpetergu"
+#define PERCENT 50
+//percentage of random cells
+//---------------macre defines end
+
+//----config-------------------
+int CELL_ALIVE_NUM[] = {3, -1};//cell turn from die to alive
+int CELL_KEEP_NUM[] = {2, 3, -1};//keep alive
+//not included in ALIVE and KEEP means turn to die
+//you can change them for fun
+//-1 means end
+
+//cols and rols
+//default 80 x 24 terminal, last line for status
+int COL = 40;
+int ROW = 24;
+
+//cell ui
+//on windows
+//char ALIVE[MAXUILEN] = "o";
+//char DIE[MAXUILEN] = " ";
+//on linux terminal
+char ALIVE[MAXUILEN] = "\033[47m  \033[0m";//white block
+char DIE[MAXUILEN] = "\033[40m  \033[0m";//black block
+
+//is circle enabled? or border?
+_Bool CIRCLE = 0;
+//----config end----------------
+
+//-------------main varaiables
+typedef struct {
+	_Bool alive;
+	short neighbour;
+}Cell;
+Cell **map;//main cells
+int alivenum = 0;//number of living cells
+double liverate = 0.0;//percentage of living cells
+//-------------main varaiables end
+
+//-------------function list
+void start();//initialization
+void welcome();//show welcome msgs
+void config();//config variables
+
+void game();//main game loop
+void randomize();//get a random living cells with PERCENT
+void updatearound();//update living cell num around each cell
+void updatecell();//update living status of each cell
+void clearscreen();//clear the screen
+void rewindcursor();//rewind cursor to home
+void updatescreen();//rewind cursor, and print a new screen of cells
+
+void end();//free and goodbye jobs
+//-------------function list end
 void game()
 {
-	if(!(map = (Cell **)malloc(ALL * sizeof(Cell)))){
+	int i;
+	if(!(map = (Cell **)malloc(COL * sizeof(Cell *)))){
 		printf("Out of memory!\n");
 		exit(1);
 	}
+	for(i = 0; i < COL; i++)
+		if(!(map[i] = (Cell *)malloc(ROW * sizeof(Cell)))){
+			printf("Out of memory!\n");
+			exit(1);
+		}
 	randomize();
 	updatearound();
 	char c;
@@ -50,7 +115,7 @@ void randomize()
 		for(j = 0; j < ROW; j++){
 			random = rand();
 			map[i][j].alive = 
-				(random / 65535.0 < PERCENT / 100.0) ? 1 : 0;
+				(random / 4294960000LL < PERCENT / 100.0) ? 1 : 0;
 		}
 }
 void updatearound()
@@ -67,10 +132,13 @@ void updatearound()
 				map[i][j].neighbour += 
 				map[(i + dx[k] + COL) % COL][(j + dy[k] + ROW) % ROW].alive;
 				else//border mode
-					if(i + dx[k] > 0 && i + dx[k] <= COL && 
-							j + dy[k] > 0 && j + dy[k] <= ROW)
+					if(i + dx[k] >= 0 && i + dx[k] < COL && 
+						j + dy[k] >= 0 && j + dy[k] < ROW){
+//						printf("-%d,%d\n", i, j);
+//						printf("%d,%d\n", i + dx[k], j + dy[k]);
 						map[i][j].neighbour += 
 							map[i + dx[k]][j + dy[k]].alive;
+					}
 			}
 		}
 }
@@ -110,6 +178,9 @@ void start()
 }
 void end()
 {
+	int i;
+	for(i = 0; i < COL; i++)
+		free(map[i]);
 	free(map);
 	printf("Goodbye!\n");
 }
@@ -155,7 +226,6 @@ void config()
 			}
 		}
 	}
-	ALL = COL * ROW;
 	//ui
 	printf("Character for living cells?(max %d)[%s]", MAXUILEN, ALIVE);
 	flag = 1;
@@ -209,4 +279,37 @@ int main(void)
 	game();
 	end();
 	return 0;
+}
+void clearscreen()
+{
+	printf("\033[2J");
+}
+void rewindcursor()
+{
+	printf("\033[H");
+}
+void updatescreen()
+{
+	rewindcursor();
+	int i, j;
+	for(i = 0; i < COL; i++){
+		for(j = 0; j < ROW; j++){
+			if(map[i][j].alive == 1)
+				printf("%s", ALIVE);
+			else printf("%s", DIE);
+		}
+		printf("\n");
+	}
+
+}
+void welcome(){
+	printf("-----------------------------\n");
+	printf("C Programming Project -- Game of Life\n");
+	printf("https://en.wikipedia.org/wiki/Conway%%27s_Game_of_Life\n");
+	printf("Run in linux to get best performance\n");
+	printf("\t2017, writen by %s (%s)\n", AUTHOR, INFO);
+	printf("\tCode also available on %s\n", GITHUB);
+	printf("\n");
+	printf("In game: press ENTER to next move, a to auto move, q ro quit\n");
+	printf("-----------------------------\n\n");
 }
