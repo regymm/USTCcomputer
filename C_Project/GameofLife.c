@@ -27,8 +27,7 @@
 
 #define AUTHOR "guyimin"
 #define INFO "PB17000002"
-#define GITHUB "https://github.com/ustcpetergu"
-#define PERCENT 50
+#define PERCENT 30
 //percentage of random cells
 //---------------macre defines end
 
@@ -53,7 +52,7 @@ char ALIVE[MAXUILEN] = "\033[47m  \033[0m";//white block
 char DIE[MAXUILEN] = "\033[40m  \033[0m";//black block
 
 //is circle enabled? or border?
-_Bool CIRCLE = 0;
+_Bool CIRCLE = 1;
 //----config end----------------
 
 //-------------main varaiables
@@ -115,7 +114,8 @@ void randomize()
 		for(j = 0; j < ROW; j++){
 			random = rand();
 			map[i][j].alive = 
-				(random / 4294960000LL < PERCENT / 100.0) ? 1 : 0;
+				(random % 100 < PERCENT) ? 1 : 0;
+			//may be not very accurate
 		}
 }
 void updatearound()
@@ -134,8 +134,6 @@ void updatearound()
 				else//border mode
 					if(i + dx[k] >= 0 && i + dx[k] < COL && 
 						j + dy[k] >= 0 && j + dy[k] < ROW){
-//						printf("-%d,%d\n", i, j);
-//						printf("%d,%d\n", i + dx[k], j + dy[k]);
 						map[i][j].neighbour += 
 							map[i + dx[k]][j + dy[k]].alive;
 					}
@@ -145,9 +143,10 @@ void updatearound()
 void updatecell()
 {
 	int i, j, k;
-	int changeflag = 0;
+	int changeflag;
 	for(i = 0; i < COL; i++)
 		for(j = 0; j < ROW; j++){
+			changeflag = 0;
 			k = 0;
 			//come alive
 			while(CELL_ALIVE_NUM[k] != -1){
@@ -282,7 +281,7 @@ int main(void)
 }
 void clearscreen()
 {
-	printf("\033[2J");
+	system("clear");
 }
 void rewindcursor()
 {
@@ -292,15 +291,14 @@ void updatescreen()
 {
 	rewindcursor();
 	int i, j;
-	for(i = 0; i < COL; i++){
-		for(j = 0; j < ROW; j++){
+	for(j = 0; j < ROW; j++){
+		for(i = 0; i < COL; i++){
 			if(map[i][j].alive == 1)
 				printf("%s", ALIVE);
 			else printf("%s", DIE);
 		}
 		printf("\n");
 	}
-
 }
 void welcome(){
 	printf("-----------------------------\n");
@@ -308,8 +306,7 @@ void welcome(){
 	printf("https://en.wikipedia.org/wiki/Conway%%27s_Game_of_Life\n");
 	printf("Run in linux to get best performance\n");
 	printf("\t2017, writen by %s (%s)\n", AUTHOR, INFO);
-	printf("\tCode also available on %s\n", GITHUB);
 	printf("\n");
-	printf("In game: press ENTER to next move, a to auto move, q ro quit\n");
+	printf("In game: press <ENTER> to next move, q<ENTER> to quit\n");
 	printf("-----------------------------\n\n");
 }
