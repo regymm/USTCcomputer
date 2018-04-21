@@ -1,0 +1,33 @@
+
+recu.o:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000000000 <calc>:
+int calc(long x)
+{
+	if(x == 0)
+		return 0;
+   0:	b8 00 00 00 00       	mov    $0x0,%eax
+int calc(long x)
+{
+	if(x == 0)
+   5:	48 85 ff             	test   %rdi,%rdi
+   8:	74 14                	je     1e <calc+0x1e>
+int calc(long x)
+{
+   a:	53                   	push   %rbx
+   b:	48 89 fb             	mov    %rdi,%rbx
+	if(x == 0)
+		return 0;
+	else
+		return (x & 1) + calc(x >> 1);
+   e:	48 d1 ff             	sar    %rdi
+  11:	e8 00 00 00 00       	callq  16 <calc+0x16>
+  16:	89 df                	mov    %ebx,%edi
+  18:	83 e7 01             	and    $0x1,%edi
+  1b:	01 f8                	add    %edi,%eax
+}
+  1d:	5b                   	pop    %rbx
+  1e:	f3 c3                	repz retq 

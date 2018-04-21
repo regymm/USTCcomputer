@@ -35,18 +35,13 @@
 int CELL_ALIVE_NUM[] = {3, -1};//cell turn from die to alive
 int CELL_KEEP_NUM[] = {2, 3, -1};//keep alive
 //not included in ALIVE and KEEP means turn to die
-//you can change them for fun
 //-1 means end
 
-//cols and rols
-//default 80 x 24 terminal, last line for status
+//(default)cols and rols
 int COL = 40;
-int ROW = 24;
+int ROW = 22;
 
 //cell ui
-//on windows
-//char ALIVE[MAXUILEN] = "o";
-//char DIE[MAXUILEN] = " ";
 //on linux terminal
 char ALIVE[MAXUILEN] = "\033[47m  \033[0m";//white block
 char DIE[MAXUILEN] = "\033[40m  \033[0m";//black block
@@ -61,8 +56,6 @@ typedef struct {
 	short neighbour;
 }Cell;
 Cell **map;//main cells
-int alivenum = 0;//number of living cells
-double liverate = 0.0;//percentage of living cells
 //-------------main varaiables end
 
 //-------------function list
