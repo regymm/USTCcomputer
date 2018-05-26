@@ -1,4 +1,6 @@
 *.o
 *.swp
 *.swo
-
+*.pdf
+*.aux
+*.log
