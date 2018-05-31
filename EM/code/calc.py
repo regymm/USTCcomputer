@@ -19,7 +19,7 @@ mp = 1.67e-27
 k_e = 1 / (4 * math.pi * epsilon0)
 k_m = miu0 / (4 * math.pi)
 
-rlimit = 1e9
+rlimit = 9e9
 # 向量类，三个分量
 class vec:
     def __init__(self, x=0, y=0, z=0):
@@ -40,16 +40,23 @@ class vec:
         self.y -= other.y
         self.z -= other.z
         return self
-    def __mul__(self, other):
-        t = self
-        self.x = t.y * other.z - t.z * other.y
-        self.y = t.z * other.x - t.x * other.z
-        self.z = t.x * other.y - t.y * other.x
+    # def __mul__(self, other):
+        # t = self
+        # self.x = t.y * other.z - t.z * other.y
+        # self.y = t.z * other.x - t.x * other.z
+        # self.z = t.x * other.y - t.y * other.x
+        # return self
     def __str__(self):
         return '%3g, %3g, %3g' % (self.x, self.y, self.z)
 #数乘和点乘
 def mul_num(num, v):
     return vec(v.x * num, v.y * num, v.z * num)
+def mul_x(vec1, vec2):
+    x = vec1.y * vec2.z - vec1.z * vec2.y
+    y = vec1.z * vec2.x - vec1.x * vec2.z
+    z = vec1.x * vec2.y - vec1.y * vec2.x
+    return vec(x, y, z)
+
 def mul_dot(vec1, vec2):
     return vec1.x * vec2.x + vec1.y * vec2.y + vec1.z * vec2.z
 def dist(pos1, pos2 = vec(0, 0, 0)):
@@ -117,12 +124,12 @@ def remove_particle(i):
 #enablebp: 开启粒子互相作用和产生的电磁场
 def update_main(t, dt, enableE=1, enableB=1, enableg=1, enablebp=1):
     #先算好场强，保证所有粒子同时不分先后被update
+    particle_E_list = []
+    particle_B_list = []
     if enableE == 1:
-        particle_E_list = []
         for item in particle_list:
             particle_E_list.append(get_field_E(item.pos, t, enablebp))
     if enableB == 1:
-        particle_B_list = []
         for item in particle_list:
             particle_B_list.append(get_field_B(item.pos, t, enablebp))
     for i in range(len(particle_list)):
@@ -135,13 +142,19 @@ def update_main(t, dt, enableE=1, enableB=1, enableg=1, enablebp=1):
             #dx = vdt
             particle_list[i].pos += mul_num(dt, item.vel)
             #update vel
-            acc = vec()
+            acc = vec(0, 0, 0)
             if enableg == 1:
                 acc += g
             if enableE == 1:
                 acc += mul_num(particle_list[i].q / particle_list[i].m, particle_E_list[i])
             if enableB == 1:
-                acc += mul_num(particle_list[i].q / particle_list[i].m, particle_list[i].vel * particle_B_list[i])
+                acc += mul_num(particle_list[i].q / particle_list[i].m, \
+                        mul_x(particle_list[i].vel, particle_B_list[i]))
+                # print(mul_num(particle_list[i].q / particle_list[i].m, \
+                        # particle_list[i].vel * particle_B_list[i]))
+            # print('acc:', acc)
+            # print('mul acc:', mul_num(dt, acc))
+            # print('vel:', particle_list[i].vel)
             particle_list[i].vel += mul_num(dt, acc)
 
 if __name__ == '__main__':
@@ -166,20 +179,20 @@ if __name__ == '__main__':
     '''
 
     #测试2，匀强磁场磁场中简单运动
-    dt = .01
-    trim = 1
+    dt = .0002
+    trim = 25
     fout.write('%g\n' % (dt * trim))
     v = 1
     B = 1e-8
-    timeend = 10 * 2 * math.pi * mp / (e * B)
+    timeend = 5 * 2 * math.pi * mp / (e * B)
     print(timeend)
     R = mp * v / (e * B)
     print(R)
     def B1(pos, t):
-        return vec(0, 1, 0)
+        return vec(0, 1e-8, 0)
     Bconst = field(B1)
     static_B_list.append(Bconst)
-    q = particle(vec(0, 0, 0), vec(0, 0, 1), q=e, m=mp, fixed=0)
+    q = particle(vec(0, 0, 0), vec(0, 1, 1), q=e, m=mp, fixed=0)
     add_particle(q)
 
 
@@ -194,7 +207,8 @@ if __name__ == '__main__':
         # q2arr[-1].pos.x = particle_list[h2].pos.x
         # q2arr[-1].pos.y = particle_list[h2].pos.y
         # q2arr[-1].pos.z = particle_list[h2].pos.z
-        update_main(time, dt, enableg=0, enableB=1, enablebp=1)
+        update_main(time, dt, enableg=0, enableB=1, enablebp=0)
+        # print(particle_list[0])
         cnt += 1
         time += dt
     fout.close()

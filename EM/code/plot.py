@@ -97,8 +97,13 @@ maindot = ax.scatter(particle_list_data[0][1].pos.x, particle_list_data[0][1].po
 duration=30
 '''
 #test 2
-# ax.scatter(0, 0, 0, color='green', lw=2)
+ax.scatter(0, 0, 0, color='green', lw=2)
+xarr = [particle_list_data[i][0].pos.x for i in range(len(particle_list_data))]
+yarr = [particle_list_data[i][0].pos.y for i in range(len(particle_list_data))]
+zarr = [particle_list_data[i][0].pos.z for i in range(len(particle_list_data))]
+ax.plot(xarr, yarr, zarr, color='g', lw=.4)
 maindot = ax.scatter(particle_list_data[0][0].pos.x, particle_list_data[0][0].pos.y, particle_list_data[0][0].pos.z, color='yellow', lw=.2)
+# plt.show()
 duration = 15
 #make and save GIF or mp4
 def make_frame_mpl(t):
