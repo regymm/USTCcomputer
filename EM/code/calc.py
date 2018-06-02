@@ -27,19 +27,13 @@ class vec:
         self.y = y
         self.z = z
     def __add__(self, other):
-        self.x += other.x
-        self.y += other.y
-        self.z += other.z
-        return self
+        return vec(self.x + other.x, self.y + other.y, self.z + other.z)
     def __radd__(self, other):
         if other == 0:
-            return self
+            return copy.deepcopy(self)
         return self.__add_(other)
     def __sub__(self, other):
-        self.x -= other.x
-        self.y -= other.y
-        self.z -= other.z
-        return self
+        return vec(self.x - other.x, self.y - other.y, self.z - other.z)
     # def __mul__(self, other):
         # t = self
         # self.x = t.y * other.z - t.z * other.y
@@ -120,6 +114,27 @@ def add_particle(p):
     return len(particle_list) - 1
 def remove_particle(i):
     particle_list.remove(i)
+#龙格库塔函数v'=f(t, v)
+#p为粒子
+def RKf(t, v, p, E, B, enableg=0, enableE=1, enableB=1):
+    f = vec(0, 0, 0)
+    if enableg == 1:
+        f += g
+    if enableE == 1:
+        f += mul_num(p.q / p.m, E)
+    if enableB == 1:
+        f += mul_num(p.q / p.m, mul_x(p.vel, B))
+    # print(f)
+    return f
+def RKgetv(t, deltat, p, E, B, enableg=0, enableE=1, enableB=1):
+    v = p.vel
+    k1 = RKf(t, v, p, E, B, enableg, enableE, enableB)
+    k2 = RKf(t + deltat / 2, v + mul_num(deltat / 2, k1), p, E, B, enableg, enableE, enableB)
+    k3 = RKf(t + deltat / 2, v + mul_num(deltat / 2, k2), p, E, B, enableg, enableE, enableB)
+    k4 = RKf(t + deltat, v + mul_num(deltat, k3), p, E, B, enableg, enableE, enableB)
+    return p.vel + mul_num(deltat / 6, k1 + k2 + k2 + k3 + k3 + k4)
+def RKgetx(t, deltat, p, E, B, enableg=0, enableE=1, enableB=1):
+    pass
 #主函数，当前时间、时间间隔，可选择不考虑B
 #enablebp: 开启粒子互相作用和产生的电磁场
 def update_main(t, dt, enableE=1, enableB=1, enableg=1, enablebp=1):
@@ -138,24 +153,32 @@ def update_main(t, dt, enableE=1, enableB=1, enableg=1, enablebp=1):
             particle_list[i].dead = 1
         #如果不是固定粒子则update
         if particle_list[i].fixed != 1 and particle_list[i].dead == 0:
-            #update pos
-            #dx = vdt
-            particle_list[i].pos += mul_num(dt, item.vel)
-            #update vel
-            acc = vec(0, 0, 0)
-            if enableg == 1:
-                acc += g
-            if enableE == 1:
-                acc += mul_num(particle_list[i].q / particle_list[i].m, particle_E_list[i])
-            if enableB == 1:
-                acc += mul_num(particle_list[i].q / particle_list[i].m, \
-                        mul_x(particle_list[i].vel, particle_B_list[i]))
-                # print(mul_num(particle_list[i].q / particle_list[i].m, \
-                        # particle_list[i].vel * particle_B_list[i]))
-            # print('acc:', acc)
-            # print('mul acc:', mul_num(dt, acc))
-            # print('vel:', particle_list[i].vel)
-            particle_list[i].vel += mul_num(dt, acc)
+            particle_list[i].pos += mul_num(dt, particle_list[i].vel)
+            # #欧拉法
+            # #update pos
+            # #dx = vdt
+            # particle_list[i].pos += mul_num(dt, particle_list[i].vel)
+            # #update vel
+            # acc = vec(0, 0, 0)
+            # if enableg == 1:
+                # acc += g
+            # if enableE == 1:
+                # acc += mul_num(particle_list[i].q / particle_list[i].m, particle_E_list[i])
+            # if enableB == 1:
+                # acc += mul_num(particle_list[i].q / particle_list[i].m, \
+                        # mul_x(particle_list[i].vel, particle_B_list[i]))
+            # particle_list[i].vel += mul_num(dt, acc)
+            #改用四阶Runge-Kutta methods
+            #同时放弃粒子相互作用
+            # v = particle_list[i].vel
+            # k1 = RKf(t, v, particle_list[i], particle_E_list[i], particle_B_list[i], enableg, enableE, enableB)
+            # k2 = RKf(t + dt / 2, v + mul_num(dt / 2, k1), particle_list[i], particle_E_list[i], particle_B_list[i], enableg, enableE, enableB)
+            # k3 = RKf(t + dt / 2, v + mul_num(dt / 2, k2), particle_list[i], particle_E_list[i], particle_B_list[i], enableg, enableE, enableB)
+            # k4 = RKf(t + dt, v + mul_num(dt, k3), particle_list[i], particle_E_list[i], particle_B_list[i], enableg, enableE, enableB)
+            # particle_list[i].vel += mul_num(dt / 6, k1 + k2 + k2 + k3 + k3 + k4)
+            particle_list[i].vel = RKgetv(t, dt, particle_list[i], particle_E_list[i], particle_B_list[i], enableg=0, enableE=1, enableB=1)
+
+
 
 if __name__ == '__main__':
     starttime = datetime.datetime.now()

@@ -104,7 +104,7 @@ zarr = [particle_list_data[i][0].pos.z for i in range(len(particle_list_data))]
 ax.plot(xarr, yarr, zarr, color='g', lw=.4)
 maindot = ax.scatter(particle_list_data[0][0].pos.x, particle_list_data[0][0].pos.y, particle_list_data[0][0].pos.z, color='yellow', lw=.2)
 # plt.show()
-duration = 15
+duration = 4
 #make and save GIF or mp4
 def make_frame_mpl(t):
     ii = int(t * timeend / (duration * dt))
