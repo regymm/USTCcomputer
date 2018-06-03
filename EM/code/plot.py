@@ -59,12 +59,12 @@ print(timeend)
 fin.close()
 print('read finished')
 
-xmax = -9e9
-xmin = 9e9
-ymax = -9e9
-ymin = 9e9
-zmax = -9e9
-zmin = 9e9
+xmax = 0
+xmin = 0
+ymax = 0
+ymin = 0
+zmax = 0
+zmin = 0
 for pl in particle_list_data:
     for item in pl:
         xmax = max(xmax, item.pos.x)
@@ -97,6 +97,7 @@ maindot = ax.scatter(particle_list_data[0][1].pos.x, particle_list_data[0][1].po
 duration=30
 '''
 #test 2
+'''
 ax.scatter(0, 0, 0, color='green', lw=2)
 xarr = [particle_list_data[i][0].pos.x for i in range(len(particle_list_data))]
 yarr = [particle_list_data[i][0].pos.y for i in range(len(particle_list_data))]
@@ -104,7 +105,18 @@ zarr = [particle_list_data[i][0].pos.z for i in range(len(particle_list_data))]
 ax.plot(xarr, yarr, zarr, color='g', lw=.4)
 maindot = ax.scatter(particle_list_data[0][0].pos.x, particle_list_data[0][0].pos.y, particle_list_data[0][0].pos.z, color='yellow', lw=.2)
 # plt.show()
-duration = 4
+'''
+#test 3
+ax.scatter(0, 0, 0, color='green', lw=2)
+ax.scatter(0, 0, 1, color='blue', lw=2)
+ax.scatter(0, 0, -1, color='blue', lw=2)
+xarr = [particle_list_data[i][0].pos.x for i in range(len(particle_list_data))]
+yarr = [particle_list_data[i][0].pos.y for i in range(len(particle_list_data))]
+zarr = [particle_list_data[i][0].pos.z for i in range(len(particle_list_data))]
+ax.plot(xarr, yarr, zarr, color='red', lw=.4)
+maindot = ax.scatter(particle_list_data[0][0].pos.x, particle_list_data[0][0].pos.y, particle_list_data[0][0].pos.z, color='blue', lw=.2)
+# plt.show()
+duration = 15
 #make and save GIF or mp4
 def make_frame_mpl(t):
     ii = int(t * timeend / (duration * dt))
@@ -118,11 +130,21 @@ def make_frame_mpl(t):
     ax.legend()
     '''
     #test 2
+    '''
     global maindot
     maindot.remove()
     maindot = ax.scatter(particle_list_data[ii][0].pos.x, particle_list_data[ii][0].pos.y, particle_list_data[ii][0].pos.z, color='red', lw=.2, \
             label='time = %2g, vel = %2g' % (t * timeend / duration, dist(particle_list_data[ii][0].vel)))
     ax.legend()
+    '''
+    #test 3
+    # '''
+    global maindot
+    maindot.remove()
+    maindot = ax.scatter(particle_list_data[ii][0].pos.x, particle_list_data[ii][0].pos.y, particle_list_data[ii][0].pos.z, color='red', lw=.2, \
+            label='time = %2g, vel = %2g' % (t * timeend / duration, dist(particle_list_data[ii][0].vel)))
+    ax.legend()
+    # '''
 
     return mplfig_to_npimage(fig)
 animation = mpy.VideoClip(make_frame_mpl, duration=duration)

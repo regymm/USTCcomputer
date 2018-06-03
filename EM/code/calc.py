@@ -75,11 +75,17 @@ class particle:
         self.dead=dead
     def __str__(self):
         return 'pos: %3g, %3g, %3g\nvel: %3g, %3g, %3g\nq: %3g, m: %3g' % (self.pos.x, self.pos.y, self.pos.z, self.vel.x, self.vel.y, self.vel.z, self.q, self.m)
+class I:
+    def __init__(self, start, end, i):
+        self.start = start
+        self.end = end
+        self.i = i
 #store items in space
 #item in particle_list is always updated
 particle_list = []
 static_B_list = []
 static_E_list = []
+static_I_list = []
 #重力加速度
 g = vec(0, 0, -9.8)
 #获得一点电、磁场，背景静态场+粒子动态场，可能与时间有关
@@ -87,6 +93,26 @@ def get_field_B(pos, t, enablebp):
     B = vec(0, 0, 0)
     for item in static_B_list:
         B = B + item.func(pos, t)
+    for item in static_I_list:
+        a = dist(item.end - item.start)
+        b = dist(pos - item.end)
+        c = dist(pos - item.start)
+        costheta1 = (a**2 + b**2 - c**2) / (2 * a * b) 
+        costheta2 = - (a**2 + c**2 - b**2) / (2 * a * c) 
+        if costheta1 > 1:
+            costheta1 = 1 - 1e-9
+        if costheta1 < -1:
+            costheta1 = -1 + 1e-9
+        r0 = b * math.sqrt(1 - costheta1 ** 2)
+        if r0 < 1e-50:
+            continue
+        direction = mul_x(item.end - item.start, pos - item.end)
+        if dist(direction) < 1e-50:
+            continue
+        d_direction = dist(mul_x(item.end - item.start, pos - item.end))
+        B = B + mul_num(k_m * item.i * (costheta1 - costheta2) / r0 * 1 / d_direction, direction)
+        # B = B + mul_num(item.i * 2 * a * k_m * ((a**2 + b**2 - c**2) / b + (a**2 + c**2 - b**2) / c) / ((a + b + c) * (a + b - c) * (a + c - b) * (b + c - a)), mul_x(item.end - item.start, pos - item.end))
+
     for item in particle_list:
         if item.dead == 0:
             #如果考虑粒子间相互作用以及对电场贡献，则全部活粒子进行运算
@@ -95,8 +121,8 @@ def get_field_B(pos, t, enablebp):
                 #如果id相同，是一个粒子，在自己处没有贡献，不予考虑
                 # if dist(pos, item.pos) > 1e-10:
                 if id(pos) != id(item.pos):
-                    B = B + mul_num(k_m * item.q / (dist(pos, item.pos) ** 3), item.vel * (pos - item.pos))
-        return B
+                    B = B + mul_num(k_m * item.q / (dist(pos, item.pos) ** 3), mul_x(item.vel, (pos - item.pos)))
+    return B
 def get_field_E(pos, t, enablebp):
     E = vec(0, 0, 0)
     for item in static_E_list:
@@ -107,7 +133,7 @@ def get_field_E(pos, t, enablebp):
                 # if dist(pos, item.pos) > 1e-8:
                 if id(pos) != id(item.pos):
                     E = E + mul_num(k_e * item.q / (dist(pos, item.pos) ** 3), pos - item.pos)
-        return E
+    return E
 def add_particle(p):
     particle_list.append(p)
     #返回数组的index
@@ -123,7 +149,7 @@ def RKf(t, v, p, E, B, enableg=0, enableE=1, enableB=1):
     if enableE == 1:
         f += mul_num(p.q / p.m, E)
     if enableB == 1:
-        f += mul_num(p.q / p.m, mul_x(p.vel, B))
+        f += mul_num(p.q / p.m, mul_x(v, B))
     # print(f)
     return f
 def RKgetv(t, deltat, p, E, B, enableg=0, enableE=1, enableB=1):
@@ -133,8 +159,12 @@ def RKgetv(t, deltat, p, E, B, enableg=0, enableE=1, enableB=1):
     k3 = RKf(t + deltat / 2, v + mul_num(deltat / 2, k2), p, E, B, enableg, enableE, enableB)
     k4 = RKf(t + deltat, v + mul_num(deltat, k3), p, E, B, enableg, enableE, enableB)
     return p.vel + mul_num(deltat / 6, k1 + k2 + k2 + k3 + k3 + k4)
-def RKgetx(t, deltat, p, E, B, enableg=0, enableE=1, enableB=1):
-    pass
+def RKgetx(t, dt, p, E, B, enableg=0, enableE=1, enableB=1):
+    k1 = RKgetv(t, dt, p, E, B, enableg, enableE, enableB)
+    k2 = RKgetv(t, dt / 2, p, E, B, enableg, enableE, enableB)
+    k3 = RKgetv(t, dt / 2, p, E, B, enableg, enableE, enableB)
+    k4 = RKgetv(t, dt, p, E, B, enableg, enableE, enableB)
+    return mul_num(dt / 6, k1 + k2 + k2 + k3 + k3 + k4)
 #主函数，当前时间、时间间隔，可选择不考虑B
 #enablebp: 开启粒子互相作用和产生的电磁场
 def update_main(t, dt, enableE=1, enableB=1, enableg=1, enablebp=1):
@@ -153,7 +183,7 @@ def update_main(t, dt, enableE=1, enableB=1, enableg=1, enablebp=1):
             particle_list[i].dead = 1
         #如果不是固定粒子则update
         if particle_list[i].fixed != 1 and particle_list[i].dead == 0:
-            particle_list[i].pos += mul_num(dt, particle_list[i].vel)
+            particle_list[i].pos += RKgetx(t, dt, particle_list[i], particle_E_list[i], particle_B_list[i], enableg, enableE, enableB)
             # #欧拉法
             # #update pos
             # #dx = vdt
@@ -193,7 +223,7 @@ if __name__ == '__main__':
     #trim：仅仅将一部分点写入文件
     trim = 100
     fout.write('%g\n' % (dt * trim))
-    timeend = 50 * 2 * math.pi * e ** 2 / (4 * math.pi * epsilon0 * me)
+    timeend = 10 * 2 * math.pi * e ** 2 / (4 * math.pi * epsilon0 * me)
     print('timeend:', timeend)
     q1 = particle(vec(0, 0, 0), vec(0, 0, 0), q=-1 * e, m=0, fixed=1)
     q2 = particle(vec(e ** 2 / (4 * math.pi * epsilon0 * me), 0, 0), vec(0, 1, 0), q=1 * e, m=1 * me, fixed=0)
@@ -201,8 +231,9 @@ if __name__ == '__main__':
     h2 = add_particle(q2)
     '''
 
+    '''
     #测试2，匀强磁场磁场中简单运动
-    dt = .0002
+    dt = .002
     trim = 25
     fout.write('%g\n' % (dt * trim))
     v = 1
@@ -217,10 +248,36 @@ if __name__ == '__main__':
     static_B_list.append(Bconst)
     q = particle(vec(0, 0, 0), vec(0, 1, 1), q=e, m=mp, fixed=0)
     add_particle(q)
+    '''
 
+    #测试 3，地磁场束缚粒子，用磁荷法进行，不能满足磁场定理但大致符合事实，唯像
+    dt = .002
+    trim = 1
+    timeend = 10
+    print(timeend)
+    fout.write('%g\n' % (dt * trim))
+    k = 100
+    def B1(pos, t):
+        return mul_num(k * k_m / (dist(pos, vec(0, 0, .001)) ** 3), pos - vec(0, 0, 1)) - mul_num(k * k_m / (dist(pos, vec(0, 0, -1)) ** 3), pos - vec(0, 0, -.001))
+    Bconst = field(B1)
+    static_B_list.append(Bconst)
+    # static_I_list.append(I(vec(.1, -.01, .1), vec(-.1, -.01, .1), 1e1))
+    # static_I_list.append(I(vec(-.1, -.01, .1), vec(-.1, -.01, -1), 1e1))
+    # static_I_list.append(I(vec(-.1, -.01, -1), vec(.1, -.01, -1), 1e1))
+    # static_I_list.append(I(vec(.1, -.01, -1), vec(.1, -.01, .1), 1e1))
+
+    # static_I_list.append(I(vec(.1, .01, 1), vec(-.1, .01, 1), 1e1))
+    # static_I_list.append(I(vec(-.1, .01, 1), vec(-.1, .01, -.1), 1e1))
+    # static_I_list.append(I(vec(-.1, .01, -.1), vec(.1, .01, -.1), 1e1))
+    # static_I_list.append(I(vec(.1, .01, -.1), vec(.1, .01, 1), 1e1))
+    q = particle(vec(0, 3, 0), vec(0, -5, 5), q=+e, m=mp, fixed=0)
+    # static_I_list.append(I(vec(0, 0, -9e3), vec(0, 0, 9e3), 1e0))
+    # q = particle(vec(1, 0, 0), vec(0, 0, -1), q=e, m=mp, fixed=0)
+    add_particle(q)
+    # print(get_field_B(vec(1, 0, 0), 0, enablebp=0))
 
     fout.write('%d\n' % len(particle_list))
-    cnt = 0
+    cnt = trim
     while time < timeend:
         if cnt == trim:
             cnt = 0
@@ -230,7 +287,7 @@ if __name__ == '__main__':
         # q2arr[-1].pos.x = particle_list[h2].pos.x
         # q2arr[-1].pos.y = particle_list[h2].pos.y
         # q2arr[-1].pos.z = particle_list[h2].pos.z
-        update_main(time, dt, enableg=0, enableB=1, enablebp=0)
+        update_main(time, dt, enableg=0, enableB=1, enablebp=1)
         # print(particle_list[0])
         cnt += 1
         time += dt
@@ -240,21 +297,3 @@ if __name__ == '__main__':
     print('time: ', endtime - starttime)
 
     
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
