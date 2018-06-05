@@ -27,28 +27,28 @@
 \subsubsection{静电场}
 电场由电荷产生，定义式为：
 \begin{equation}
-	\sum i_{in} = \sum i_{out}
+	\vec{E} = \frac{\vec{F}}{q}
 \end{equation}
 两电荷间作用力满足库仑定律：
 \begin{equation}
-	\sum i_{in} = \sum i_{out}
+	\vec{F_{10}} = k\frac{q_1q_0}{r_{10}^3}\vec{r_{10}} = - \vec{F_{01}}
 \end{equation}
 其成立条件为静止（或低速）电荷。
 
 
 实验证明两静止点电荷间作用力不因第三个点电荷的存在而改变，即满足叠加原理：
 \begin{equation}
-	\sum i_{in} = \sum i_{out}
+	\vec{F} = \frac1{4\pi\epsilon_0}q_0\sum_{i=1}^{n} \frac{q_i}{|\vec{r} - \vec{r_i}|^3}(\vec{r} - \vec{r_i})
 \end{equation}
 由此可求得空间任一点处电场强度。
 \subsubsection{静磁场}
 磁场由电流产生，其值由毕奥——萨伐尔定律给出：
 \begin{equation}
-	\sum i_{in} = \sum i_{out}
+	d\vec{B} = \frac{\mu_0}{4\pi}\frac{Id\vec{l}\times\vec{r}}{r^3}
 \end{equation}
 粒子在磁场中受力与粒子运动情况有关，有：
 \begin{equation}
-	\sum i_{in} = \sum i_{out}
+	\vec{F} = q\vec{v}\times\vec{B}
 \end{equation}
 由此可求得空间任一点处磁场强度及粒子在磁场中受力。
 而历史上还有一种用电场成因类比磁场的理论，即磁荷理论，该理论认为磁场与电场类似，由“磁荷”产生。该理论虽然被证明是不正确的，但在一些模拟任务中可以简化模型并获得直观的、较好的效果。
@@ -73,22 +73,33 @@
 %\subsection{计算机方法}
 %计算机电路分析的方法和思路与平时计算与解题不同，一般解题看中计算的简便性与技巧性，但计算机分析则应看中方法的通用性，即一种模型能解一整类问题，而计算的繁琐则不太重要了。
 
-\section{程序结构及计算算法}
-\subsection{计算方法}
-\subsubsection{欧拉法}
-\subsubsection{龙格——库塔法}
+\section{计算方法及程序结构}
+\subsection{计算方法（简略介绍）}
+\subsubsection{欧拉（Euler）法}
+欧拉法是朴素的常微分方程数值解法，相当于取函数的一阶泰勒展开作为近似，最简单的欧拉公式是用向前差商近似$y'(x)$，以$h$为步长，递推公式为$y_{n+1} = y_n + hf(x_{n+1},x{n})$，相对而言误差较大。
+\subsubsection{龙格—库塔（Runge—Kutta）法}
+龙格——库塔法相当于用多阶泰勒展开近似函数的增长，常用的有二阶、四阶方法，本文的模拟器用的就是四阶方法。四阶龙格—库塔法公式如下：
 \subsection{程序结构与设计细节}
 \subsubsection{程序结构}
 \subsubsection{可视化}
-\subsubsection{设计细节}
-\section{物理模型的验证、分析及可视化结果}
+\subsubsection{设计及优化细节}
+\section{物理模型的验证、分析、评估及可视化结果}
 \subsection{模型一：点电荷电场中的匀速圆周运动}
 \subsection{模型二：匀强磁场中的等距螺旋线运动}
 \subsection{模型三：地磁场束缚带电粒子（磁镜效应）}
+\subsection{计算评估}
+\subsection{程序评估}
 \section{模型的不足之处与可能的改进方案}
 \subsection{计算方法的改进}
 \subsection{计算效率的优化}
 \subsection{可视化的改进}
+
+
+\paragraph{感谢}
+感谢张增明老师的课程和PPT给此论文很大启发\\
+感谢王泓同学使用龙格——库塔法的建议，以及刘紫檀同学使用pypy提高程序运行速度的建议\\
+感谢Linux用户协会的热心群友提供技术帮助
+\paragraph{参考文献}
 \end{document}
 
 
