@@ -231,8 +231,8 @@ if __name__ == '__main__':
     h2 = add_particle(q2)
     '''
 
-    '''
     #测试2，匀强磁场磁场中简单运动
+    # '''
     dt = .002
     trim = 25
     fout.write('%g\n' % (dt * trim))
@@ -248,9 +248,10 @@ if __name__ == '__main__':
     static_B_list.append(Bconst)
     q = particle(vec(0, 0, 0), vec(0, 1, 1), q=e, m=mp, fixed=0)
     add_particle(q)
-    '''
+    # '''
 
     #测试 3，地磁场束缚粒子，用磁荷法进行，不能满足磁场定理但大致符合事实，唯像
+    '''
     dt = .0005
     trim = 1
     timeend = 10
@@ -275,6 +276,7 @@ if __name__ == '__main__':
     # q = particle(vec(1, 0, 0), vec(0, 0, -1), q=e, m=mp, fixed=0)
     add_particle(q)
     # print(get_field_B(vec(1, 0, 0), 0, enablebp=0))
+    '''
 
     fout.write('%d\n' % len(particle_list))
     cnt = trim

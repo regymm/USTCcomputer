@@ -3,6 +3,7 @@
 \usepackage{mathtools}
 \usepackage{listings}
 \usepackage{fontspec}
+\usepackage{graphicx}
 \newfontfamily\consolas{Consolas}
 \lstset{basicstyle=\small\consolas}
 
@@ -76,16 +77,25 @@
 程序使用Python语言编写，分为两个文件：计算的calc.py和可视化的plot.py，calc计算结果输出到文件，plot读取文件并绘图。其中calc部分只用到了Python自带的数学库等库，而plot部分使用了matplotlib和moviepy等高级的库。为提高效率，calc.py使用PyPy运行，效率可获得16倍左右的提升，而plot.py使用默认的Python3解释器运行。
 
 
-运行环境：Intel(R) Core(TM) i7-8550U CPU @ 1.80GHz
+程序的功能介绍如下。
+
+
+该程序可以在输入空间电、磁场分布及粒子的初位置、速度等信息后对单个粒子或多个粒子的运动轨迹进行模拟，并将结果以mp4视频的形式呈现出来。模拟过程可以选择使用欧拉法或龙格—库塔法模拟、使用纯电场或考虑电磁场、是否考虑重力场、是否考虑粒子间相互作用，也可以自定义步长、模拟时间、可视化形式，只需要30行左右代码就可以完成对一个完整模型的模拟及可视化全过程。程序不考虑相对论效应，仅在经典电磁学范围内模拟；也不对用户给出的电、磁场函数进行高斯定理、环路定理的检验，支持电流元$Id\vec{l}$产生磁场的模拟但该功能还不完善，并未展示。
+
+
+由于使用Python，只要安装了对应的库，程序在各主流操作系统上都能正常运行。
+
+
+以下所有示例的运行时间等信息均在以下测试环境下得到。
+
+
+系统配置：Intel(R) Core(TM) i7-8550U CPU @ 1.80GHz
 
 
 操作系统：Debian GNU/Linux 9 (stretch) 64-bit
 
 
-由于使用Python，只要安装了对应的库，程序在各主流系统上都能正常运行。
-
-
-主要数据使用面向对象方法，数据结构简要介绍如下。
+程序主要数据使用面向对象方法，数据结构简要介绍如下。
 
 
 向量类，三个分量，重载部分运算：\footnote{以下代码均为程序代码的片段，有部分删减和修改，或是旧版本的代码，只表示逻辑结构，不保证能够直接运行}
@@ -154,6 +164,9 @@ particle_list = []
 static_B_list = []
 static_E_list = []
 \end{lstlisting}
+计算方法的实现介绍如下。
+
+
 获得空间中一点的电场、磁场，可以选择考虑或忽略运动粒子产生的场：
 \begin{lstlisting}[language=Python]
 def get_field_B(pos, t, enablebp):
@@ -278,10 +291,33 @@ import copy
 #使用calc.py中的类和常量
 from calc import *
 \end{lstlisting}
+具体模型模拟的代码将在后面章节展示。
 \section{物理模型的验证、分析、评估及可视化结果}
+为与事实相符，以下模型均不考虑重力场。
 \subsection{模型一：点电荷电场中的匀速圆周运动}
+最简单的电磁学模型之一，即一个负电荷绕一个固定正电荷做匀速圆周运动，如图\ref{fig:cir}。模拟的时间范围为0到15000秒，速度理论上不变，实际从$1.0000m/s$变为$0.9991m/s$，但考虑到步长取值为$0.01s$，是一个相对而言很大的值，这个误差还是很令人满意的。程序共迭代了约$1.5\times10^6$次，用时约4.1秒\footnote{以下所有程序用时均为程序运行的表观时间，仅仅由程序运行前后系统时间相减得到，不是由统计软件得到的CPU时间。}。
+\begin{figure}[h!]
+	\centering
+	\includegraphics[width=9cm]{cir.png}
+	\caption{简单的粒子做圆周运动图片}
+	\label{fig:cir}
+\end{figure}
 \subsection{模型二：匀强磁场中的等距螺旋线运动}
+一个简单的磁场模型，即粒子在匀强磁场中做等距螺旋线运动，如图\ref{fig:helix}，洛伦兹力不做功，能量守恒。该模型以$0.002s$为步长，模拟约30秒时间内的运动，程序运行用时0.13秒左右。运行中粒子的速度恒为$1.41421m/s$未发生变化，可见模拟精度比较是高的。
+\begin{figure}[h!]
+	\centering
+	\includegraphics[width=9cm]{helix.png}
+	\caption{匀强磁场中等距螺旋线运动图片，运动轨迹已画出}
+	\label{fig:helix}
+\end{figure}
 \subsection{模型三：地磁场束缚带电粒子（磁镜效应）}
+地磁场的磁镜效应束缚粒子的模拟，使用两个异号磁荷产生的磁场代表地磁场，如图\ref{fig:globe}。从模拟结果可见，虽然是使用磁荷这个不够“物理”的模型进行模拟，结果还是与事实很相符的。如图可见粒子在“地球”（未画出）周围在南北极间来回运动但被约束在离中心一定距离的一层中，并朝一个方向“进动”，而小范围内粒子还做螺旋运动，均与事实相符。视频中还可以看到粒子在“赤道”处速度较快且螺旋运动不太明显，而在靠近南北极处震荡剧烈，这是极光的产生原因。
+\begin{figure}[h!]
+	\centering
+	\includegraphics[width=9cm]{globe.png}
+	\caption{地磁场中粒子运动的图片，图中大圆点为“地心”，小圆点为运动的粒子，粒子轨迹已画出}
+	\label{fig:globe}
+\end{figure}
 \subsection{计算评估}
 \subsection{程序评估}
 \section{模型的不足之处与可能的改进方案}
@@ -289,11 +325,11 @@ from calc import *
 \subsection{计算效率的优化}
 \subsection{可视化的改进}
 \section{结束}
-\paragraph{感谢}
+\textbf{感谢}
 感谢张增明老师的课程和PPT给此论文很大启发\\
 感谢王泓同学使用龙格—库塔法的建议，以及刘紫檀同学使用pypy提高程序运行速度的建议\\
 感谢Linux用户协会的热心群友提供技术帮助
-\paragraph{参考文献}
+\textbf{参考文献}
 \end{document}
 
 
