@@ -3,6 +3,7 @@
 *.pdf
 *.aux
 *.log
+*.toc
 *.so
 *.gif 
 *.mp4

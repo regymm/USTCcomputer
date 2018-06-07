@@ -1,11 +1,15 @@
 % -*- coding: UTF-8 -*-
 \documentclass[UTF-8,cs4size]{ctexart}
+\usepackage{mathtools}
+\usepackage{listings}
+\usepackage{fontspec}
+\newfontfamily\consolas{Consolas}
+\lstset{basicstyle=\small\consolas}
 
 
 \title{电磁学小论文 —— 带电粒子在电磁场中运动的计算机模拟程序的简单实现}
 \author{PB17000002  古宜民}
 \date{2018年6月}
-
 %\bibliographstyle{plain}
 
 
@@ -21,6 +25,8 @@
 
 
 本文将介绍模拟算法、程序设计结构和实现过程，并展示可视化结果，最后分析程序结果和可改进方面。
+\clearpage
+\tableofcontents
 \clearpage
 \section{电磁场基本方程}
 \subsection{基本概念及定理}
@@ -52,37 +58,226 @@
 \end{equation}
 由此可求得空间任一点处磁场强度及粒子在磁场中受力。
 而历史上还有一种用电场成因类比磁场的理论，即磁荷理论，该理论认为磁场与电场类似，由“磁荷”产生。该理论虽然被证明是不正确的，但在一些模拟任务中可以简化模型并获得直观的、较好的效果。
-%\subsubsection{元件}
-%\subsubsection{电路分析常用名词}
-%\paragraph{支路} 电路中一个或若干个二段元件依次串联且流经的是同一个电流的电路分支称为一个支路。
-%\paragraph{结点} 电路中三个及以上支路的连接点，称为结点。
-%\paragraph{回路} 电路中由若干个支路组成的闭合路径，称为回路。
-%\paragraph{网孔} 平面电路中不含支路的回路，称为网孔。
-%\subsubsection{基尔霍夫定律}
-%基尔霍夫定律是电路理论的基石，对电路分析与求解有重大意义。
-%\paragraph{\textbf{基尔霍夫电流定律（Kirchhoff's Current Law, KCL）}} 电路中的任一结点，在任意时刻，流入该结点的全部支路电流之和等于流出该结点的全部支路电流之和，即
-%\begin{equation}
-	%\sum i_{in} = \sum i_{out}
-%\end{equation}
-%\paragraph{\textbf{基尔霍夫电压定律（Kirchhoff's Voltage Law, KVL）}} 电路中任一回路，在任意时刻，沿该回路闭合路径绕行一周的全部支路电压的代数和为零，即
-%\begin{equation}
-	%\sum_{k=1}^{b}u_k = 0
-%\end{equation}
-%其中$b$为回路中包含支路个数，$u_k$为回路中第$k$个支路电压。
-%由图论知识可以证明，对于具有$n$个结点的电路，其独立的KCL方程有$n-1$个，通常取一个结点为参考结点，其余为独立结点；对于具有$n$个结点，$b$条支路的电路，其独立的KVL方程有$b-n+1$个。
-%\subsection{计算机方法}
-%计算机电路分析的方法和思路与平时计算与解题不同，一般解题看中计算的简便性与技巧性，但计算机分析则应看中方法的通用性，即一种模型能解一整类问题，而计算的繁琐则不太重要了。
-
 \section{计算方法及程序结构}
 \subsection{计算方法（简略介绍）}
 \subsubsection{欧拉（Euler）法}
-欧拉法是朴素的常微分方程数值解法，相当于取函数的一阶泰勒展开作为近似，最简单的欧拉公式是用向前差商近似$y'(x)$，以$h$为步长，递推公式为$y_{n+1} = y_n + hf(x_{n+1},x{n})$，相对而言误差较大。
+欧拉法是朴素的常微分方程数值解法，相当于取函数的一阶泰勒展开作为近似，最简单的欧拉公式是用向前差商近似$y'(x)$，以$h$为步长，递推公式为$y_{n+1} = y_n + hf(x_{n+1},x_{n})$，相对而言误差较大，且有向一个方向持续增大的可能。
 \subsubsection{龙格—库塔（Runge—Kutta）法}
-龙格——库塔法相当于用多阶泰勒展开近似函数的增长，常用的有二阶、四阶方法，本文的模拟器用的就是四阶方法。四阶龙格—库塔法公式如下：
+龙格—库塔法是经典的微分方程数值解法，相比欧拉法误差小很多且更加稳定，相当于用多阶泰勒展开近似函数的增长，常用的有二阶、四阶方法，还可以选择固定步长或自适应步长，即在函数变化剧烈的区域自动减小步长。本文的模拟器用的就是固定步长的四阶方法。四阶龙格—库塔法公式如下：
+\begin{gather}
+	y_{n+1} = y_n + \frac{h}{6}(k_1+2k_2+2k_3+k_4) \notag \\
+	k_1 = f(x_n,y_n) \notag \\
+	k_2 = f(x_n+\frac12h,y_n+\frac12hk_1) \notag \\
+	k_3 = f(x_n+\frac12h,y_n+\frac12hk_2) \notag \\
+	k_4 = f(x_n+h,y_n+hk_3)
+\end{gather}
 \subsection{程序结构与设计细节}
-\subsubsection{程序结构}
+\subsubsection{程序结构及代码概览}
+程序使用Python语言编写，分为两个文件：计算的calc.py和可视化的plot.py，calc计算结果输出到文件，plot读取文件并绘图。其中calc部分只用到了Python自带的数学库等库，而plot部分使用了matplotlib和moviepy等高级的库。为提高效率，calc.py使用PyPy运行，效率可获得16倍左右的提升，而plot.py使用默认的Python3解释器运行。
+
+
+运行环境：Intel(R) Core(TM) i7-8550U CPU @ 1.80GHz
+
+
+操作系统：Debian GNU/Linux 9 (stretch) 64-bit
+
+
+由于使用Python，只要安装了对应的库，程序在各主流系统上都能正常运行。
+
+
+主要数据使用面向对象方法，数据结构简要介绍如下。
+
+
+向量类，三个分量，重载部分运算：\footnote{以下代码均为程序代码的片段，有部分删减和修改，或是旧版本的代码，只表示逻辑结构，不保证能够直接运行}
+\begin{lstlisting}[language=Python]
+class vec:
+    def __init__(self, x=0, y=0, z=0):
+        self.x = x
+        self.y = y
+        self.z = z
+    def __add__(self, other):
+        return vec(self.x + other.x, self.y + other.y, self.z + other.z)
+    def __radd__(self, other):
+        if other == 0:
+            return copy.deepcopy(self)
+        return self.__add_(other)
+    def __sub__(self, other):
+        return vec(self.x - other.x, self.y - other.y, self.z - other.z)
+    # def __mul__(self, other):
+        # t = self
+        # self.x = t.y * other.z - t.z * other.y
+        # self.y = t.z * other.x - t.x * other.z
+        # self.z = t.x * other.y - t.y * other.x
+        # return self
+    def __str__(self):
+        return '%3g, %3g, %3g' % (self.x, self.y, self.z)
+\end{lstlisting}
+完善向量周边运算：
+\begin{lstlisting}[language=Python]
+def mul_num(num, v):
+    return vec(v.x * num, v.y * num, v.z * num)
+def mul_x(vec1, vec2):
+    x = vec1.y * vec2.z - vec1.z * vec2.y
+    y = vec1.z * vec2.x - vec1.x * vec2.z
+    z = vec1.x * vec2.y - vec1.y * vec2.x
+    return vec(x, y, z)
+
+def mul_dot(vec1, vec2):
+    return vec1.x * vec2.x + vec1.y * vec2.y + vec1.z * vec2.z
+def dist(pos1, pos2 = vec(0, 0, 0)):
+    return math.sqrt((pos1.x - pos2.x)**2 + (pos1.y - pos2.y)**2 + (pos1.z - pos2.z)**2)
+\end{lstlisting}
+定义场类，由一个函数构建场，函数输入位置和时间，返回一个场向量
+\begin{lstlisting}[language=Python]
+class field:
+    #func: vec(x, y, z), t -> vec(Ex, Ey, Ez)
+    def __init__(self, func):
+        self.func = func
+\end{lstlisting}
+粒子类，包含粒子的多种属性，如位置、速度、质量、电荷量等，其中fixed属性表示粒子是否运动，如果不运动则看作背景场的一部分，在程序实现中与可运动粒子有一定区别：
+\begin{lstlisting}[language=Python]
+class particle:
+    #pos and vel is class vec
+    def __init__(self, pos=vec(0, 0, 0), vel=vec(0, 0, 0), q=0, m=0, fixed=0, dead=0):
+        self.pos = pos
+        self.vel = vel
+        self.q = q
+        self.m = m
+        self.fixed = fixed
+        self.dead=dead
+\end{lstlisting}
+存储数据，使用数组：
+\begin{lstlisting}[language=Python]
+#store items in space
+#item in particle_list is always updated
+particle_list = []
+static_B_list = []
+static_E_list = []
+\end{lstlisting}
+获得空间中一点的电场、磁场，可以选择考虑或忽略运动粒子产生的场：
+\begin{lstlisting}[language=Python]
+def get_field_B(pos, t, enablebp):
+    B = vec(0, 0, 0)
+    for item in static_B_list:
+        B = B + item.func(pos, t)
+    for item in particle_list:
+        if item.dead == 0:
+            #如果考虑粒子间相互作用以及对电场贡献，则全部活粒子进行运算
+            #如果不考虑，则只计算固定粒子的贡献
+            if enablebp == 1 or (enablebp == 0 and item.fixed == 1):
+                #如果id相同，是一个粒子，在自己处没有贡献，不予考虑
+                if id(pos) != id(item.pos):
+                    B = B + mul_num(k_m * item.q / (dist(pos, item.pos) ** 3), mul_x(item.vel, (pos - item.pos)))
+    return B
+def get_field_E(pos, t, enablebp):
+    E = vec(0, 0, 0)
+    for item in static_E_list:
+        E = E + item.func(pos, t)
+    for item in particle_list:
+        if item.dead == 0:
+            if enablebp == 1 or (enablebp == 0 and item.fixed == 1):
+                if id(pos) != id(item.pos):
+                    E = E + mul_num(k_e * item.q / (dist(pos, item.pos) ** 3), pos - item.pos)
+    return E
+\end{lstlisting}
+龙格—库塔法的实现，由于是二阶方程，要有两组计算：
+\begin{lstlisting}[language=Python]
+#龙格库塔函数v'=f(t, v)
+#p为粒子
+def RKf(t, v, p, E, B, enableg=0, enableE=1, enableB=1):
+    f = vec(0, 0, 0)
+    if enableg == 1:
+        f += g
+    if enableE == 1:
+        f += mul_num(p.q / p.m, E)
+    if enableB == 1:
+        f += mul_num(p.q / p.m, mul_x(v, B))
+    # print(f)
+    return f
+def RKgetv(t, deltat, p, E, B, enableg=0, enableE=1, enableB=1):
+    v = p.vel
+    k1 = RKf(t, v, p, E, B, enableg, enableE, enableB)
+    k2 = RKf(t + deltat / 2, v + mul_num(deltat / 2, k1), p, E, B, enableg, enableE, enableB)
+    k3 = RKf(t + deltat / 2, v + mul_num(deltat / 2, k2), p, E, B, enableg, enableE, enableB)
+    k4 = RKf(t + deltat, v + mul_num(deltat, k3), p, E, B, enableg, enableE, enableB)
+    return p.vel + mul_num(deltat / 6, k1 + k2 + k2 + k3 + k3 + k4)
+def RKgetx(t, dt, p, E, B, enableg=0, enableE=1, enableB=1):
+    k1 = RKgetv(t, dt, p, E, B, enableg, enableE, enableB)
+    k2 = RKgetv(t, dt / 2, p, E, B, enableg, enableE, enableB)
+    k3 = RKgetv(t, dt / 2, p, E, B, enableg, enableE, enableB)
+    k4 = RKgetv(t, dt, p, E, B, enableg, enableE, enableB)
+    return mul_num(dt / 6, k1 + k2 + k2 + k3 + k3 + k4)
+\end{lstlisting}
+主计算函数，以$dt$为步长更新粒子位置一次（附有欧拉法代码），如果粒子位置超过限制，则不再处理，即dead=1。另外，因龙格—库塔法的要求现时刻以后的粒子位置与速度，而运动中的粒子这些量难于计算和维护，程序暂不能对粒子相互作用进行模拟（欧拉法可以有此功能）：
+\begin{lstlisting}[language=Python]
+#主函数，当前时间、时间间隔，可选择不考虑B
+#enablebp: 开启粒子互相作用和产生的电磁场
+def update_main(t, dt, enableE=1, enableB=1, enableg=1, enablebp=1):
+    #先算好场强，保证所有粒子同时不分先后被update
+    particle_E_list = []
+    particle_B_list = []
+    if enableE == 1:
+        for item in particle_list:
+            particle_E_list.append(get_field_E(item.pos, t, enablebp))
+    if enableB == 1:
+        for item in particle_list:
+            particle_B_list.append(get_field_B(item.pos, t, enablebp))
+    for i in range(len(particle_list)):
+        #if out of range, make it dead 
+        if dist(particle_list[i].pos, vec()) > rlimit:
+            particle_list[i].dead = 1
+        #如果不是固定粒子则update
+        if particle_list[i].fixed != 1 and particle_list[i].dead == 0:
+            particle_list[i].pos += RKgetx(t, dt, particle_list[i], particle_E_list[i], particle_B_list[i], enableg, enableE, enableB)
+            # #欧拉法
+            # #update pos
+            # #dx = vdt
+            # particle_list[i].pos += mul_num(dt, particle_list[i].vel)
+            # #update vel
+            # acc = vec(0, 0, 0)
+            # if enableg == 1:
+                # acc += g
+            # if enableE == 1:
+                # acc += mul_num(particle_list[i].q / particle_list[i].m, particle_E_list[i])
+            # if enableB == 1:
+                # acc += mul_num(particle_list[i].q / particle_list[i].m, \
+                        # mul_x(particle_list[i].vel, particle_B_list[i]))
+            # particle_list[i].vel += mul_num(dt, acc)
+            #改用四阶Runge-Kutta methods
+            #同时放弃粒子相互作用
+            particle_list[i].vel = RKgetv(t, dt, particle_list[i], particle_E_list[i], particle_B_list[i], enableg=0, enableE=1, enableB=1)
+\end{lstlisting}
+main函数中循环进行模拟，即调用update\_main函数，其中trim和cnt的维护是保证仅仅将部分数据写入文件以供作图，防止数据文件过大，导致绘图时内存占用过大：
+\begin{lstlisting}[language=Python]
+    cnt = trim
+    while time < timeend:
+        if cnt == trim:
+            cnt = 0
+            for item in particle_list:
+                fout.write('%g %g %g %g %g %g %g %g %d %d\n' % (item.pos.x, item.pos.y, item.pos.z, item.vel.x, item.vel.y, item.vel.z, item.q, item.m, item.fixed, item.dead))
+        update_main(time, dt, enableg=0, enableB=1, enablebp=1)
+        cnt += 1
+        time += dt
+    fout.close()
+    endtime = datetime.datetime.now()
+\end{lstlisting}
 \subsubsection{可视化}
-\subsubsection{设计及优化细节}
+读入计算生成的数据，使用matplotlib模块进行3D作图，再使用moviepy模块生成mp4视频或gif动图。生成15秒、24帧每秒的mp4视频所需时间约15秒。
+
+
+调用库概览：
+\begin{lstlisting}[language=Python]
+import math
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import axes3d
+from moviepy.video.io.bindings import mplfig_to_npimage
+import moviepy.editor as mpy
+import datetime
+import copy
+
+#使用calc.py中的类和常量
+from calc import *
+\end{lstlisting}
 \section{物理模型的验证、分析、评估及可视化结果}
 \subsection{模型一：点电荷电场中的匀速圆周运动}
 \subsection{模型二：匀强磁场中的等距螺旋线运动}
@@ -93,11 +288,10 @@
 \subsection{计算方法的改进}
 \subsection{计算效率的优化}
 \subsection{可视化的改进}
-
-
+\section{结束}
 \paragraph{感谢}
 感谢张增明老师的课程和PPT给此论文很大启发\\
-感谢王泓同学使用龙格——库塔法的建议，以及刘紫檀同学使用pypy提高程序运行速度的建议\\
+感谢王泓同学使用龙格—库塔法的建议，以及刘紫檀同学使用pypy提高程序运行速度的建议\\
 感谢Linux用户协会的热心群友提供技术帮助
 \paragraph{参考文献}
 \end{document}

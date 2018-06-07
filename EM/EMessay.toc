@@ -1,0 +1,24 @@
+\contentsline {section}{\numberline {1}电磁场基本方程}{3}
+\contentsline {subsection}{\numberline {1.1}基本概念及定理}{3}
+\contentsline {subsubsection}{\numberline {1.1.1}静电场}{3}
+\contentsline {subsubsection}{\numberline {1.1.2}静磁场}{3}
+\contentsline {section}{\numberline {2}计算方法及程序结构}{4}
+\contentsline {subsection}{\numberline {2.1}计算方法（简略介绍）}{4}
+\contentsline {subsubsection}{\numberline {2.1.1}欧拉（Euler）法}{4}
+\contentsline {subsubsection}{\numberline {2.1.2}龙格—库塔（Runge—Kutta）法}{4}
+\contentsline {subsection}{\numberline {2.2}程序结构与设计细节}{4}
+\contentsline {subsubsection}{\numberline {2.2.1}程序结构及代码概览}{4}
+\contentsline {subsubsection}{\numberline {2.2.2}可视化}{10}
+\contentsline {section}{\numberline {3}物理模型的验证、分析、评估及可视化结果}{11}
+\contentsline {subsection}{\numberline {3.1}模型一：点电荷电场中的匀速圆周运动}{11}
+\contentsline {subsection}{\numberline {3.2}模型二：匀强磁场中的等距螺旋线运动}{11}
+\contentsline {subsection}{\numberline {3.3}模型三：地磁场束缚带电粒子（磁镜效应）}{11}
+\contentsline {subsection}{\numberline {3.4}计算评估}{11}
+\contentsline {subsection}{\numberline {3.5}程序评估}{11}
+\contentsline {section}{\numberline {4}模型的不足之处与可能的改进方案}{11}
+\contentsline {subsection}{\numberline {4.1}计算方法的改进}{11}
+\contentsline {subsection}{\numberline {4.2}计算效率的优化}{11}
+\contentsline {subsection}{\numberline {4.3}可视化的改进}{11}
+\contentsline {section}{\numberline {5}结束}{11}
+\contentsline {paragraph}{感谢}{11}
+\contentsline {paragraph}{参考文献}{11}
