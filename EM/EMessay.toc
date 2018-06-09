@@ -13,10 +13,10 @@
 \contentsline {subsection}{\numberline {3.1}模型一：点电荷电场中的匀速圆周运动}{11}
 \contentsline {subsection}{\numberline {3.2}模型二：匀强磁场中的等距螺旋线运动}{12}
 \contentsline {subsection}{\numberline {3.3}模型三：地磁场束缚带电粒子（磁镜效应）}{12}
-\contentsline {subsection}{\numberline {3.4}计算评估}{14}
-\contentsline {subsection}{\numberline {3.5}程序评估}{14}
-\contentsline {section}{\numberline {4}模型的不足之处与可能的改进方案}{14}
-\contentsline {subsection}{\numberline {4.1}计算方法的改进}{14}
-\contentsline {subsection}{\numberline {4.2}计算效率的优化}{14}
-\contentsline {subsection}{\numberline {4.3}可视化的改进}{14}
-\contentsline {section}{\numberline {5}结束}{14}
+\contentsline {subsection}{\numberline {3.4}模型的代码}{13}
+\contentsline {section}{\numberline {4}模型的不足之处与可能的改进方案}{16}
+\contentsline {subsection}{\numberline {4.1}理论方面的不足}{16}
+\contentsline {subsection}{\numberline {4.2}计算方法的改进}{16}
+\contentsline {subsection}{\numberline {4.3}计算效率的优化}{16}
+\contentsline {subsection}{\numberline {4.4}可视化以及用户界面的改进}{17}
+\contentsline {section}{\numberline {5}结束}{17}

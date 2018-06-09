@@ -22,10 +22,10 @@
 	摘要
 \end{center}
 
-带电粒子在电磁场中运动是电磁学的重要组成部分，是电磁学的理论与实验基础，既可以使用已知场来研究带电粒子的性质，如质谱仪；也可以用已知粒子来考察场的性质，无论在科学研究还是应用实践领域都有必不可少的作用。但真正进行实验测试需要专业设备和人员，是一件成本较高的事情，而计算机模拟不但方便快捷，还能得到更加准确或抽象的模型，有重大意义。本文以静电磁场基本方程：库伦定律、叠加原理和毕奥——萨伐尔定律为基础，不考虑相对论效应等其他因素，使用Python语言对带电粒子在静电磁场中运动轨迹进行模拟并可视化，即实现一个简易的物理引擎，并使用实际物理模型进行验证。自己从零开始分析问题、实现程序，对物理理解和编程能力都有很大锻炼。
+带电粒子在电磁场中运动是电磁学的重要组成部分，是电磁学的理论与实验基础，既可以使用已知场来研究带电粒子的性质，如质谱仪；也可以用已知粒子来考察未知场的性质，无论在科学研究还是应用实践领域都有必不可少的作用。但真正进行实验测试需要专业设备和人员，是一件成本较高的事情，而计算机模拟不但方便快捷，还能得到更加准确或抽象的模型，有重大意义。本文以静电磁场基本方程：库伦定律、叠加原理和毕奥—萨伐尔定律为基础，不考虑相对论效应等其他因素，使用Python语言对带电粒子在静电磁场中运动轨迹进行模拟并可视化，即实现一个简易的物理引擎，并使用实际物理模型进行验证。自己从零开始分析问题、实现程序，对物理理解和编程能力都有很大锻炼。
 
 
-本文将介绍模拟算法、程序设计结构和实现过程，并展示可视化结果，最后分析程序结果和可改进方面。
+本文将介绍模拟算法、程序设计结构和实现过程，并展示可视化结果，最后分析可改进方面。
 \clearpage
 \tableofcontents
 \clearpage
@@ -49,7 +49,7 @@
 \end{equation}
 由此可求得空间任一点处电场强度。
 \subsubsection{静磁场}
-磁场由电流产生，其值由毕奥——萨伐尔定律给出：
+磁场由电流产生，其值由毕奥—萨伐尔定律给出：
 \begin{equation}
 	d\vec{B} = \frac{\mu_0}{4\pi}\frac{Id\vec{l}\times\vec{r}}{r^3}
 \end{equation}
@@ -291,45 +291,128 @@ import copy
 #使用calc.py中的类和常量
 from calc import *
 \end{lstlisting}
+
+
 具体模型模拟的代码将在后面章节展示。
 \section{物理模型的验证、分析、评估及可视化结果}
 为与事实相符，以下模型均不考虑重力场。
 \subsection{模型一：点电荷电场中的匀速圆周运动}
 最简单的电磁学模型之一，即一个负电荷绕一个固定正电荷做匀速圆周运动，如图\ref{fig:cir}。模拟的时间范围为0到15000秒，速度理论上不变，实际从$1.0000m/s$变为$0.9991m/s$，但考虑到步长取值为$0.01s$，是一个相对而言很大的值，这个误差还是很令人满意的。程序共迭代了约$1.5\times10^6$次，用时约4.1秒\footnote{以下所有程序用时均为程序运行的表观时间，仅仅由程序运行前后系统时间相减得到，不是由统计软件得到的CPU时间。}。
-\begin{figure}[h!]
+\begin{figure}[ht!]
 	\centering
 	\includegraphics[width=9cm]{cir.png}
 	\caption{简单的粒子做圆周运动图片}
 	\label{fig:cir}
 \end{figure}
 \subsection{模型二：匀强磁场中的等距螺旋线运动}
-一个简单的磁场模型，即粒子在匀强磁场中做等距螺旋线运动，如图\ref{fig:helix}，洛伦兹力不做功，能量守恒。该模型以$0.002s$为步长，模拟约30秒时间内的运动，程序运行用时0.13秒左右。运行中粒子的速度恒为$1.41421m/s$未发生变化，可见模拟精度比较是高的。
-\begin{figure}[h!]
+一个简单的磁场模型，即粒子在匀强磁场中做等距螺旋线运动，如图\ref{fig:helix}，洛伦兹力不做功，能量守恒。该模型以$0.002s$为步长，模拟约30秒时间内的运动，程序运行用时0.13秒左右。运行中粒子的速度恒为$1.41421m/s$未发生变化，可见模拟精度是比较高的。
+\begin{figure}[ht!]
 	\centering
 	\includegraphics[width=9cm]{helix.png}
 	\caption{匀强磁场中等距螺旋线运动图片，运动轨迹已画出}
 	\label{fig:helix}
 \end{figure}
 \subsection{模型三：地磁场束缚带电粒子（磁镜效应）}
-地磁场的磁镜效应束缚粒子的模拟，使用两个异号磁荷产生的磁场代表地磁场，如图\ref{fig:globe}。从模拟结果可见，虽然是使用磁荷这个不够“物理”的模型进行模拟，结果还是与事实很相符的。如图可见粒子在“地球”（未画出）周围在南北极间来回运动但被约束在离中心一定距离的一层中，并朝一个方向“进动”，而小范围内粒子还做螺旋运动，均与事实相符。视频中还可以看到粒子在“赤道”处速度较快且螺旋运动不太明显，而在靠近南北极处震荡剧烈，这是极光的产生原因。
-\begin{figure}[h!]
+地磁场的磁镜效应束缚粒子的模拟，使用两个异号磁荷产生的磁场代表地磁场，如图\ref{fig:globe}。从模拟结果可见，虽然是使用磁荷这个不够严格的模型进行模拟，但由于运动的粒子离磁荷较远，磁荷模型适用较好，结果还是与事实很相符的。如图可见粒子在“地球”（未画出）周围在南北极间来回运动但被约束在离中心一定距离的层中，并朝一个方向“进动”，而小范围内粒子还做螺旋运动，均与事实相符。视频中还可以看到粒子在“赤道”处速度较快且螺旋运动不太明显，而在靠近南北极处震荡剧烈，这是极光的产生原因。粒子速度仅有$10^{-5}$量级的误差。
+\begin{figure}[ht!]
 	\centering
 	\includegraphics[width=9cm]{globe.png}
 	\caption{地磁场中粒子运动的图片，图中大圆点为“地心”，小圆点为运动的粒子，粒子轨迹已画出}
 	\label{fig:globe}
 \end{figure}
-\subsection{计算评估}
-\subsection{程序评估}
+\subsection{模型的代码}
+每个模型的模拟需要两个部分的代码，即calc中的具体模型描述和参数设定代码、plot中绘图的描述代码。文中的三个模型calc部分均少于20行代码，plot部分也少于20行代码，并且不同模型绘图代码基本相同，复制后做少量修改即可。
+
+
+三个模型calc部分代码：
+\begin{lstlisting}[language=Python]
+    #测试1
+    dt = .01
+    #trim：仅仅将一部分点写入文件
+    trim = 100
+    fout.write('%g\n' % (dt * trim))
+    timeend = 10 * 2 * math.pi * e ** 2 / (4 * math.pi * epsilon0 * me)
+    print('timeend:', timeend)
+    q1 = particle(vec(0, 0, 0), vec(0, 0, 0), q=-1 * e, m=0, fixed=1)
+    q2 = particle(vec(e ** 2 / (4 * math.pi * epsilon0 * me), 0, 0), vec(0, 1, 0), q=1 * e, m=1 * me, fixed=0)
+    h1 = add_particle(q1)
+    h2 = add_particle(q2)
+    #测试2
+    dt = .002
+    trim = 25
+    fout.write('%g\n' % (dt * trim))
+    v = 1
+    B = 1e-8
+    timeend = 5 * 2 * math.pi * mp / (e * B)
+    print(timeend)
+    R = mp * v / (e * B)
+    print(R)
+    def B1(pos, t):
+        return vec(0, 1e-8, 0)
+    Bconst = field(B1)
+    static_B_list.append(Bconst)
+    q = particle(vec(0, 0, 0), vec(0, 1, 1), q=e, m=mp, fixed=0)
+    add_particle(q)
+    #测试3
+    dt = .0005
+    trim = 1
+    timeend = 10
+    print(timeend)
+    fout.write('%g\n' % (dt * trim))
+    k = 100
+    def B1(pos, t):
+        return mul_num(k * k_m / (dist(pos, vec(0, 0, .001)) ** 3), pos - vec(0, 0, 1)) - mul_num(k * k_m / (dist(pos, vec(0, 0, -1)) ** 3), pos - vec(0, 0, -.001))
+    Bconst = field(B1)
+    static_B_list.append(Bconst)
+    q = particle(vec(0, 3, 0), vec(0, -5, 5), q=+e, m=mp, fixed=0)
+    add_particle(q)
+\end{lstlisting}
+plot部分代码片段，以一个模型为例：
+\begin{lstlisting}[language=Python]
+ax.scatter(0, 0, 0, color='green', lw=2)
+ax.scatter(0, 0, .001, color='blue', lw=2)
+ax.scatter(0, 0, -.001, color='blue', lw=2)
+xarr = [particle_list_data[i][0].pos.x for i in range(len(particle_list_data))]
+yarr = [particle_list_data[i][0].pos.y for i in range(len(particle_list_data))]
+zarr = [particle_list_data[i][0].pos.z for i in range(len(particle_list_data))]
+ax.plot(xarr, yarr, zarr, color='red', lw=.4)
+maindot = ax.scatter(particle_list_data[0][0].pos.x, particle_list_data[0][0].pos.y, particle_list_data[0][0].pos.z, color='blue', lw=.2)
+\end{lstlisting}
+plot部分每一帧的生成所用函数，即移除旧的点、画出新的点：
+\begin{lstlisting}[language=Python]
+    global maindot
+    maindot.remove()
+    maindot = ax.scatter(particle_list_data[ii][0].pos.x, particle_list_data[ii][0].pos.y, particle_list_data[ii][0].pos.z, color='red', lw=.2, \
+            label='time = %2g, vel = %2g' % (t * timeend / duration, dist(particle_list_data[ii][0].vel)))
+    ax.legend()
+\end{lstlisting}
 \section{模型的不足之处与可能的改进方案}
+\subsection{理论方面的不足}
+目前模拟完全不考虑相对论效应以及运动的粒子产生的其他效应，仅仅在经典电磁学方面能够适用，有一定局限性。并且模拟中电磁场可随意给出，不能确定满足高斯定理、环路定理，也有一定缺陷，但可以通过手工检查电磁场函数形式而避免。
 \subsection{计算方法的改进}
+四阶龙格—库塔法在模拟中表现很好，但考虑到电磁场中运动的性质，如果能使用自适应步长的龙格—库塔法，期望可以有更好的结果。并且目前模型不支持对粒子间相互作用进行龙格—库塔模拟，这是可以改进的一点。而对电流元产生磁场的模拟也不是很理想，因为对于可能出现的粒子离电流元很近时分母接近0的情况目前未能解决。
+
+
+目前粒子均为点电荷模型，故不能处理可能的粒子碰撞，尤其是正负电荷碰撞的问题，如果能够完善碰撞检测与处理，则能够使得模型的健壮性更强、适用范围更广，成为一个更完善的物理引擎。
 \subsection{计算效率的优化}
-\subsection{可视化的改进}
+由于Python作图方便、代码简介，本模拟器使用Python语言实现，但Python运行效率低是众所周知，所以如果使用如C++、Java等语言移植计算部分，将获得进一步运行效率提升。
+
+
+并且本模拟器以实现功能为重，并未对可能优化的代码部分，如向量计算、迭代计算等部分进行优化，所以提升空间还是很大的。
+\subsection{可视化以及用户界面的改进}
+本模拟器使用moviepy模块生成视频，目前没有移动视角、缩放等交互式功能，可以考虑使用Unity等高级引擎辅助。
+
+
+目前模拟器如果想对模型进行模拟，只能通过添加代码、甚至修改代码实现，没有交互式添加粒子、添加电磁场、设定参数的功能，不易于使用，这也是可以改进的一点。
 \section{结束}
-\textbf{感谢}
-感谢张增明老师的课程和PPT给此论文很大启发\\
-感谢王泓同学使用龙格—库塔法的建议，以及刘紫檀同学使用pypy提高程序运行速度的建议\\
-感谢Linux用户协会的热心群友提供技术帮助
-\textbf{参考文献}
+\textbf{感谢}\\
+感谢张增明老师的课程和PPT给此论文很大启发。\\
+感谢王泓同学使用龙格—库塔法的建议，以及刘紫檀同学使用pypy提高程序运行速度的建议。\\
+
+
+\textbf{参考文献}\\
+$\left[ 1\right] $张韶华，奚梅成.数值计算方法与算法.北京：科学出版社.2006\\
+$\left[ 2\right] $胡友秋等.电磁学与电动力学. 北京：科学出版社.2014
 \end{document}
 
 
