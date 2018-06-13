@@ -1,0 +1,337 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=GBK">
+<title>E:\USTCcomputer\EM\code\calc.py.html</title>
+<meta name="Generator" content="Vim/8.0">
+<meta name="plugin-version" content="vim7.4_v2">
+<meta name="syntax" content="python">
+<meta name="settings" content="use_css,pre_wrap,no_foldcolumn,expand_tabs,prevent_copy=">
+<meta name="colorscheme" content="none">
+<style type="text/css">
+<!--
+pre { white-space: pre-wrap; font-family: monospace; color: #000000; background-color: #ffffff; }
+body { font-family: monospace; color: #000000; background-color: #ffffff; }
+* { font-size: 1em; }
+.PreProc { color: #a020f0; }
+.Identifier { color: #008b8b; }
+.Statement { color: #a52a2a; font-weight: bold; }
+.Comment { color: #0000ff; }
+.Constant { color: #ff00ff; }
+.Special { color: #6a5acd; }
+-->
+</style>
+
+<script type='text/javascript'>
+<!--
+
+-->
+</script>
+</head>
+<body>
+<pre id='vimCodeElement'>
+<span class="Comment">#!/usr/bin/env pypy3</span>
+
+<span class="Constant">'''</span>
+<span class="Constant">My Simple Simple Electromagnetic Simulation Engine</span>
+<span class="Constant">start on Sat May 26 20:29:34 CST 2018</span>
+<span class="Constant">split project to 2 files: one for calc, using pypy3, the other for ploting and mp4 generate, using python3</span>
+<span class="Constant">'''</span>
+
+<span class="PreProc">import</span> math
+<span class="Comment"># import copy</span>
+<span class="PreProc">import</span> datetime
+
+miu0 = <span class="Constant">4</span> * math.pi * <span class="Constant">1e-7</span>
+epsilon0 = <span class="Constant">8.85e-12</span>
+e = <span class="Constant">1.602e-19</span>
+me = <span class="Constant">9.31e-31</span>
+mp = <span class="Constant">1.67e-27</span>
+
+k_e = <span class="Constant">1</span> / (<span class="Constant">4</span> * math.pi * epsilon0)
+k_m = miu0 / (<span class="Constant">4</span> * math.pi)
+
+rlimit = <span class="Constant">9e9</span>
+<span class="Comment"># 向量类，三个分量</span>
+<span class="Statement">class</span> <span class="Identifier">vec</span>:
+    <span class="Statement">def</span> <span class="Identifier">__init__</span>(self, x=<span class="Constant">0</span>, y=<span class="Constant">0</span>, z=<span class="Constant">0</span>):
+        self.x = x
+        self.y = y
+        self.z = z
+    <span class="Statement">def</span> <span class="Identifier">__add__</span>(self, other):
+        <span class="Statement">return</span> vec(self.x + other.x, self.y + other.y, self.z + other.z)
+    <span class="Statement">def</span> <span class="Identifier">__radd__</span>(self, other):
+        <span class="Statement">if</span> other == <span class="Constant">0</span>:
+            <span class="Statement">return</span> copy.deepcopy(self)
+        <span class="Statement">return</span> self.__add_(other)
+    <span class="Statement">def</span> <span class="Identifier">__sub__</span>(self, other):
+        <span class="Statement">return</span> vec(self.x - other.x, self.y - other.y, self.z - other.z)
+    <span class="Comment"># def __mul__(self, other):</span>
+        <span class="Comment"># t = self</span>
+        <span class="Comment"># self.x = t.y * other.z - t.z * other.y</span>
+        <span class="Comment"># self.y = t.z * other.x - t.x * other.z</span>
+        <span class="Comment"># self.z = t.x * other.y - t.y * other.x</span>
+        <span class="Comment"># return self</span>
+    <span class="Statement">def</span> <span class="Identifier">__str__</span>(self):
+        <span class="Statement">return</span> <span class="Constant">'</span><span class="Constant">%3g, %3g, %3g</span><span class="Constant">'</span> % (self.x, self.y, self.z)
+<span class="Comment">#数乘和点�~X</span>
+<span class="Statement">def</span> <span class="Identifier">mul_num</span>(num, v):
+    <span class="Statement">return</span> vec(v.x * num, v.y * num, v.z * num)
+<span class="Statement">def</span> <span class="Identifier">mul_x</span>(vec1, vec2):
+    x = vec1.y * vec2.z - vec1.z * vec2.y
+    y = vec1.z * vec2.x - vec1.x * vec2.z
+    z = vec1.x * vec2.y - vec1.y * vec2.x
+    <span class="Statement">return</span> vec(x, y, z)
+
+<span class="Statement">def</span> <span class="Identifier">mul_dot</span>(vec1, vec2):
+    <span class="Statement">return</span> vec1.x * vec2.x + vec1.y * vec2.y + vec1.z * vec2.z
+<span class="Statement">def</span> <span class="Identifier">dist</span>(pos1, pos2 = vec(<span class="Constant">0</span>, <span class="Constant">0</span>, <span class="Constant">0</span>)):
+    <span class="Statement">return</span> math.sqrt((pos1.x - pos2.x)**<span class="Constant">2</span> + (pos1.y - pos2.y)**<span class="Constant">2</span> + (pos1.z - pos2.z)**<span class="Constant">2</span>)
+
+<span class="Comment">#场类，电场、磁场、重力场�~I</span>
+<span class="Comment">#警告：未对高斯定理、环路定理检验！�~A</span>
+<span class="Comment">#警告：用国际单位制！</span>
+<span class="Statement">class</span> <span class="Identifier">field</span>:
+    <span class="Comment">#func: vec(x, y, z), t -&gt; vec(Ex, Ey, Ez)</span>
+    <span class="Statement">def</span> <span class="Identifier">__init__</span>(self, func):
+        self.func = func
+<span class="Statement">class</span> <span class="Identifier">particle</span>:
+    <span class="Comment">#pos and vel is class vec</span>
+    <span class="Comment">#fixed:is the particle can't be moved?</span>
+    <span class="Statement">def</span> <span class="Identifier">__init__</span>(self, pos=vec(<span class="Constant">0</span>, <span class="Constant">0</span>, <span class="Constant">0</span>), vel=vec(<span class="Constant">0</span>, <span class="Constant">0</span>, <span class="Constant">0</span>), q=<span class="Constant">0</span>, m=<span class="Constant">0</span>, fixed=<span class="Constant">0</span>, dead=<span class="Constant">0</span>):
+        self.pos = pos
+        self.vel = vel
+        self.q = q
+        self.m = m
+        self.fixed = fixed
+        self.dead=dead
+    <span class="Statement">def</span> <span class="Identifier">__str__</span>(self):
+        <span class="Statement">return</span> <span class="Constant">'</span><span class="Constant">pos: %3g, %3g, %3g</span><span class="Special">\n</span><span class="Constant">vel: %3g, %3g, %3g</span><span class="Special">\n</span><span class="Constant">q: %3g, m: %3g</span><span class="Constant">'</span> % (self.pos.x, self.pos.y, self.pos.z, self.vel.x, self.vel.y, self.vel.z, self.q, self.m)
+<span class="Statement">class</span> <span class="Identifier">I</span>:
+    <span class="Statement">def</span> <span class="Identifier">__init__</span>(self, start, end, i):
+        self.start = start
+        self.end = end
+        self.i = i
+<span class="Comment">#store items in space</span>
+<span class="Comment">#item in particle_list is always updated</span>
+particle_list = []
+static_B_list = []
+static_E_list = []
+static_I_list = []
+<span class="Comment">#重力加速度</span>
+g = vec(<span class="Constant">0</span>, <span class="Constant">0</span>, -<span class="Constant">9.8</span>)
+<span class="Comment">#获得一点电、磁场，背景静态场+粒子动态场，可能与时间有关</span>
+<span class="Statement">def</span> <span class="Identifier">get_field_B</span>(pos, t, enablebp):
+    B = vec(<span class="Constant">0</span>, <span class="Constant">0</span>, <span class="Constant">0</span>)
+    <span class="Statement">for</span> item <span class="Statement">in</span> static_B_list:
+        B = B + item.func(pos, t)
+    <span class="Statement">for</span> item <span class="Statement">in</span> static_I_list:
+        a = dist(item.end - item.start)
+        b = dist(pos - item.end)
+        c = dist(pos - item.start)
+        costheta1 = (a**<span class="Constant">2</span> + b**<span class="Constant">2</span> - c**<span class="Constant">2</span>) / (<span class="Constant">2</span> * a * b)
+        costheta2 = - (a**<span class="Constant">2</span> + c**<span class="Constant">2</span> - b**<span class="Constant">2</span>) / (<span class="Constant">2</span> * a * c)
+        <span class="Statement">if</span> costheta1 &gt; <span class="Constant">1</span>:
+            costheta1 = <span class="Constant">1</span> - <span class="Constant">1e-9</span>
+        <span class="Statement">if</span> costheta1 &lt; -<span class="Constant">1</span>:
+            costheta1 = -<span class="Constant">1</span> + <span class="Constant">1e-9</span>
+        r0 = b * math.sqrt(<span class="Constant">1</span> - costheta1 ** <span class="Constant">2</span>)
+        <span class="Statement">if</span> r0 &lt; <span class="Constant">1e-50</span>:
+            <span class="Statement">continue</span>
+        direction = mul_x(item.end - item.start, pos - item.end)
+        <span class="Statement">if</span> dist(direction) &lt; <span class="Constant">1e-50</span>:
+            <span class="Statement">continue</span>
+        d_direction = dist(mul_x(item.end - item.start, pos - item.end))
+        B = B + mul_num(k_m * item.i * (costheta1 - costheta2) / r0 * <span class="Constant">1</span> / d_direction, direction)
+        <span class="Comment"># B = B + mul_num(item.i * 2 * a * k_m * ((a**2 + b**2 - c**2) / b + (a**2 + c**2 - b**2) / c) / ((a + b + c) * (a + b - c) * (a + c - b) * (b + c - a)), mul_x(item.end - item.start, pos - item.end))</span>
+
+    <span class="Statement">for</span> item <span class="Statement">in</span> particle_list:
+        <span class="Statement">if</span> item.dead == <span class="Constant">0</span>:
+            <span class="Comment">#如果考虑粒子间相互作用以及对电场贡献，则全部活粒子进行运�~W</span>
+            <span class="Comment">#如果不考虑，则只计算固定粒子的贡献</span>
+            <span class="Statement">if</span> enablebp == <span class="Constant">1</span> <span class="Statement">or</span> (enablebp == <span class="Constant">0</span> <span class="Statement">and</span> item.fixed == <span class="Constant">1</span>):
+                <span class="Comment">#如果id相同，是一个粒子，在自己处没有贡献，不予考虑</span>
+                <span class="Comment"># if dist(pos, item.pos) &gt; 1e-10:</span>
+                <span class="Statement">if</span> <span class="Identifier">id</span>(pos) != <span class="Identifier">id</span>(item.pos):
+                    B = B + mul_num(k_m * item.q / (dist(pos, item.pos) ** <span class="Constant">3</span>), mul_x(item.vel, (pos - item.pos)))
+    <span class="Statement">return</span> B
+<span class="Statement">def</span> <span class="Identifier">get_field_E</span>(pos, t, enablebp):
+    E = vec(<span class="Constant">0</span>, <span class="Constant">0</span>, <span class="Constant">0</span>)
+    <span class="Statement">for</span> item <span class="Statement">in</span> static_E_list:
+        E = E + item.func(pos, t)
+    <span class="Statement">for</span> item <span class="Statement">in</span> particle_list:
+        <span class="Statement">if</span> item.dead == <span class="Constant">0</span>:
+            <span class="Statement">if</span> enablebp == <span class="Constant">1</span> <span class="Statement">or</span> (enablebp == <span class="Constant">0</span> <span class="Statement">and</span> item.fixed == <span class="Constant">1</span>):
+                <span class="Comment"># if dist(pos, item.pos) &gt; 1e-8:</span>
+                <span class="Statement">if</span> <span class="Identifier">id</span>(pos) != <span class="Identifier">id</span>(item.pos):
+                    E = E + mul_num(k_e * item.q / (dist(pos, item.pos) ** <span class="Constant">3</span>), pos - item.pos)
+    <span class="Statement">return</span> E
+<span class="Statement">def</span> <span class="Identifier">add_particle</span>(p):
+    particle_list.append(p)
+    <span class="Comment">#返回数组的index</span>
+    <span class="Statement">return</span> <span class="Identifier">len</span>(particle_list) - <span class="Constant">1</span>
+<span class="Statement">def</span> <span class="Identifier">remove_particle</span>(i):
+    particle_list.remove(i)
+<span class="Comment">#龙格库塔函数v'=f(t, v)</span>
+<span class="Comment">#p为粒�~P</span>
+<span class="Statement">def</span> <span class="Identifier">RKf</span>(t, v, p, E, B, enableg=<span class="Constant">0</span>, enableE=<span class="Constant">1</span>, enableB=<span class="Constant">1</span>):
+    f = vec(<span class="Constant">0</span>, <span class="Constant">0</span>, <span class="Constant">0</span>)
+    <span class="Statement">if</span> enableg == <span class="Constant">1</span>:
+        f += g
+    <span class="Statement">if</span> enableE == <span class="Constant">1</span>:
+        f += mul_num(p.q / p.m, E)
+    <span class="Statement">if</span> enableB == <span class="Constant">1</span>:
+        f += mul_num(p.q / p.m, mul_x(v, B))
+    <span class="Comment"># print(f)</span>
+    <span class="Statement">return</span> f
+<span class="Statement">def</span> <span class="Identifier">RKgetv</span>(t, deltat, p, E, B, enableg=<span class="Constant">0</span>, enableE=<span class="Constant">1</span>, enableB=<span class="Constant">1</span>):
+    v = p.vel
+    k1 = RKf(t, v, p, E, B, enableg, enableE, enableB)
+    k2 = RKf(t + deltat / <span class="Constant">2</span>, v + mul_num(deltat / <span class="Constant">2</span>, k1), p, E, B, enableg, enableE, enableB)
+    k3 = RKf(t + deltat / <span class="Constant">2</span>, v + mul_num(deltat / <span class="Constant">2</span>, k2), p, E, B, enableg, enableE, enableB)
+    k4 = RKf(t + deltat, v + mul_num(deltat, k3), p, E, B, enableg, enableE, enableB)
+    <span class="Statement">return</span> p.vel + mul_num(deltat / <span class="Constant">6</span>, k1 + k2 + k2 + k3 + k3 + k4)
+<span class="Statement">def</span> <span class="Identifier">RKgetx</span>(t, dt, p, E, B, enableg=<span class="Constant">0</span>, enableE=<span class="Constant">1</span>, enableB=<span class="Constant">1</span>):
+    k1 = RKgetv(t, dt, p, E, B, enableg, enableE, enableB)
+    k2 = RKgetv(t, dt / <span class="Constant">2</span>, p, E, B, enableg, enableE, enableB)
+    k3 = RKgetv(t, dt / <span class="Constant">2</span>, p, E, B, enableg, enableE, enableB)
+    k4 = RKgetv(t, dt, p, E, B, enableg, enableE, enableB)
+    <span class="Statement">return</span> mul_num(dt / <span class="Constant">6</span>, k1 + k2 + k2 + k3 + k3 + k4)
+<span class="Comment">#主函数，当前时间、时间间隔，可选择不考虑B</span>
+<span class="Comment">#enablebp: 开启粒子互相作用和产生的电磁场</span>
+<span class="Statement">def</span> <span class="Identifier">update_main</span>(t, dt, enableE=<span class="Constant">1</span>, enableB=<span class="Constant">1</span>, enableg=<span class="Constant">1</span>, enablebp=<span class="Constant">1</span>):
+    <span class="Comment">#先算好场强，保证所有粒子同时不分先后被update</span>
+    particle_E_list = []
+    particle_B_list = []
+    <span class="Statement">if</span> enableE == <span class="Constant">1</span>:
+        <span class="Statement">for</span> item <span class="Statement">in</span> particle_list:
+            particle_E_list.append(get_field_E(item.pos, t, enablebp))
+    <span class="Statement">if</span> enableB == <span class="Constant">1</span>:
+        <span class="Statement">for</span> item <span class="Statement">in</span> particle_list:
+            particle_B_list.append(get_field_B(item.pos, t, enablebp))
+    <span class="Statement">for</span> i <span class="Statement">in</span> <span class="Identifier">range</span>(<span class="Identifier">len</span>(particle_list)):
+        <span class="Comment">#if out of range, make it dead </span>
+        <span class="Statement">if</span> dist(particle_list[i].pos, vec()) &gt; rlimit:
+            particle_list[i].dead = <span class="Constant">1</span>
+        <span class="Comment">#如果不是固定粒子则update</span>
+        <span class="Statement">if</span> particle_list[i].fixed != <span class="Constant">1</span> <span class="Statement">and</span> particle_list[i].dead == <span class="Constant">0</span>:
+            particle_list[i].pos += RKgetx(t, dt, particle_list[i], particle_E_list[i], particle_B_list[i], enableg, enableE, enableB)
+            <span class="Comment"># #欧拉�~U</span>
+            <span class="Comment"># #update pos</span>
+            <span class="Comment"># #dx = vdt</span>
+            <span class="Comment"># particle_list[i].pos += mul_num(dt, particle_list[i].vel)</span>
+            <span class="Comment"># #update vel</span>
+            <span class="Comment"># acc = vec(0, 0, 0)</span>
+            <span class="Comment"># if enableg == 1:</span>
+                <span class="Comment"># acc += g</span>
+            <span class="Comment"># if enableE == 1:</span>
+                <span class="Comment"># acc += mul_num(particle_list[i].q / particle_list[i].m, particle_E_list[i])</span>
+            <span class="Comment"># if enableB == 1:</span>
+                <span class="Comment"># acc += mul_num(particle_list[i].q / particle_list[i].m, \</span>
+                        <span class="Comment"># mul_x(particle_list[i].vel, particle_B_list[i]))</span>
+            <span class="Comment"># particle_list[i].vel += mul_num(dt, acc)</span>
+            <span class="Comment">#改用四阶Runge-Kutta methods</span>
+            <span class="Comment">#同时放弃粒子相互作用</span>
+            <span class="Comment"># v = particle_list[i].vel</span>
+            <span class="Comment"># k1 = RKf(t, v, particle_list[i], particle_E_list[i], particle_B_list[i], enableg, enableE, enableB)</span>
+            <span class="Comment"># k2 = RKf(t + dt / 2, v + mul_num(dt / 2, k1), particle_list[i], particle_E_list[i], particle_B_list[i], enableg, enableE, enableB)</span>
+            <span class="Comment"># k3 = RKf(t + dt / 2, v + mul_num(dt / 2, k2), particle_list[i], particle_E_list[i], particle_B_list[i], enableg, enableE, enableB)</span>
+            <span class="Comment"># k4 = RKf(t + dt, v + mul_num(dt, k3), particle_list[i], particle_E_list[i], particle_B_list[i], enableg, enableE, enableB)</span>
+            <span class="Comment"># particle_list[i].vel += mul_num(dt / 6, k1 + k2 + k2 + k3 + k3 + k4)</span>
+            particle_list[i].vel = RKgetv(t, dt, particle_list[i], particle_E_list[i], particle_B_list[i], enableg=<span class="Constant">0</span>, enableE=<span class="Constant">1</span>, enableB=<span class="Constant">1</span>)
+
+
+
+<span class="Statement">if</span> __name__ == <span class="Constant">'</span><span class="Constant">__main__</span><span class="Constant">'</span>:
+    starttime = datetime.datetime.now()
+    <span class="Comment">#写入文件，第一行：时间间隔dt，第二行：粒子束n，之后行：partitle_list全部内容，共N组，每组n�|*</span>
+    fn = <span class="Constant">'</span><span class="Constant">data.txt</span><span class="Constant">'</span>
+    fout = <span class="Identifier">open</span>(fn, <span class="Constant">'</span><span class="Constant">w</span><span class="Constant">'</span>)
+    time = <span class="Constant">0</span>
+
+    <span class="Comment">#测试1，circle accuracy and speed test</span>
+    <span class="Constant">'''</span>
+<span class="Constant">    dt = .01</span>
+<span class="Constant">    #trim：仅仅将一部分点写入文�|6</span>
+<span class="Constant">    trim = 100</span>
+<span class="Constant">    fout.write('%g</span><span class="Special">\n</span><span class="Constant">' % (dt * trim))</span>
+<span class="Constant">    timeend = 10 * 2 * math.pi * e ** 2 / (4 * math.pi * epsilon0 * me)</span>
+<span class="Constant">    print('timeend:', timeend)</span>
+<span class="Constant">    q1 = particle(vec(0, 0, 0), vec(0, 0, 0), q=-1 * e, m=0, fixed=1)</span>
+<span class="Constant">    q2 = particle(vec(e ** 2 / (4 * math.pi * epsilon0 * me), 0, 0), vec(0, 1, 0), q=1 * e, m=1 * me, fixed=0)</span>
+<span class="Constant">    h1 = add_particle(q1)</span>
+<span class="Constant">    h2 = add_particle(q2)</span>
+<span class="Constant">    </span><span class="Constant">'''</span>
+
+    <span class="Comment">#测试2，匀强磁场磁场中简单运�|(</span>
+    <span class="Comment"># '''</span>
+    dt = <span class="Constant">.002</span>
+    trim = <span class="Constant">25</span>
+    fout.write(<span class="Constant">'</span><span class="Constant">%g</span><span class="Special">\n</span><span class="Constant">'</span> % (dt * trim))
+    v = <span class="Constant">1</span>
+    B = <span class="Constant">1e-8</span>
+    timeend = <span class="Constant">5</span> * <span class="Constant">2</span> * math.pi * mp / (e * B)
+    <span class="Identifier">print</span>(timeend)
+    R = mp * v / (e * B)
+    <span class="Identifier">print</span>(R)
+    <span class="Statement">def</span> <span class="Identifier">B1</span>(pos, t):
+        <span class="Statement">return</span> vec(<span class="Constant">0</span>, <span class="Constant">1e-8</span>, <span class="Constant">0</span>)
+    Bconst = field(B1)
+    static_B_list.append(Bconst)
+    q = particle(vec(<span class="Constant">0</span>, <span class="Constant">0</span>, <span class="Constant">0</span>), vec(<span class="Constant">0</span>, <span class="Constant">1</span>, <span class="Constant">1</span>), q=e, m=mp, fixed=<span class="Constant">0</span>)
+    add_particle(q)
+    <span class="Comment"># '''</span>
+
+    <span class="Comment">#测试 3，地磁场束缚粒子，用磁荷法进行，不能满足磁场定理但大致符合事实，唯像</span>
+    <span class="Constant">'''</span>
+<span class="Constant">    dt = .0005</span>
+<span class="Constant">    trim = 1</span>
+<span class="Constant">    timeend = 10</span>
+<span class="Constant">    print(timeend)</span>
+<span class="Constant">    fout.write('%g</span><span class="Special">\n</span><span class="Constant">' % (dt * trim))</span>
+<span class="Constant">    k = 100</span>
+<span class="Constant">    def B1(pos, t):</span>
+<span class="Constant">        return mul_num(k * k_m / (dist(pos, vec(0, 0, .001)) ** 3), pos - vec(0, 0, 1)) - mul_num(k * k_m / (dist(pos, vec(0, 0, -1)) ** 3), pos - vec(0, 0, -.001))</span>
+<span class="Constant">    Bconst = field(B1)</span>
+<span class="Constant">    static_B_list.append(Bconst)</span>
+<span class="Constant">    # static_I_list.append(I(vec(.1, -.01, .1), vec(-.1, -.01, .1), 1e1))</span>
+<span class="Constant">    # static_I_list.append(I(vec(-.1, -.01, .1), vec(-.1, -.01, -1), 1e1))</span>
+<span class="Constant">    # static_I_list.append(I(vec(-.1, -.01, -1), vec(.1, -.01, -1), 1e1))</span>
+<span class="Constant">    # static_I_list.append(I(vec(.1, -.01, -1), vec(.1, -.01, .1), 1e1))</span>
+
+<span class="Constant">    # static_I_list.append(I(vec(.1, .01, 1), vec(-.1, .01, 1), 1e1))</span>
+<span class="Constant">    # static_I_list.append(I(vec(-.1, .01, 1), vec(-.1, .01, -.1), 1e1))</span>
+<span class="Constant">    # static_I_list.append(I(vec(-.1, .01, -.1), vec(.1, .01, -.1), 1e1))</span>
+<span class="Constant">    # static_I_list.append(I(vec(.1, .01, -.1), vec(.1, .01, 1), 1e1))</span>
+<span class="Constant">    q = particle(vec(0, 3, 0), vec(0, -5, 5), q=+e, m=mp, fixed=0)</span>
+<span class="Constant">    # static_I_list.append(I(vec(0, 0, -9e3), vec(0, 0, 9e3), 1e0))</span>
+<span class="Constant">    # q = particle(vec(1, 0, 0), vec(0, 0, -1), q=e, m=mp, fixed=0)</span>
+<span class="Constant">    add_particle(q)</span>
+<span class="Constant">    # print(get_field_B(vec(1, 0, 0), 0, enablebp=0))</span>
+<span class="Constant">    </span><span class="Constant">'''</span>
+
+    fout.write(<span class="Constant">'</span><span class="Constant">%d</span><span class="Special">\n</span><span class="Constant">'</span> % <span class="Identifier">len</span>(particle_list))
+    cnt = trim
+    <span class="Statement">while</span> time &lt; timeend:
+        <span class="Statement">if</span> cnt == trim:
+            cnt = <span class="Constant">0</span>
+            <span class="Statement">for</span> item <span class="Statement">in</span> particle_list:
+                fout.write(<span class="Constant">'</span><span class="Constant">%g %g %g %g %g %g %g %g %d %d</span><span class="Special">\n</span><span class="Constant">'</span> % (item.pos.x, item.pos.y, item.pos.z, item.vel.x, item.vel.y, item.vel.z, item.q, item.m, item.fixed, item.dead))
+        <span class="Comment"># q2arr.append(particle(vec(), vec(), 0, 0, 0, 0))</span>
+        <span class="Comment"># q2arr[-1].pos.x = particle_list[h2].pos.x</span>
+        <span class="Comment"># q2arr[-1].pos.y = particle_list[h2].pos.y</span>
+        <span class="Comment"># q2arr[-1].pos.z = particle_list[h2].pos.z</span>
+        update_main(time, dt, enableg=<span class="Constant">0</span>, enableB=<span class="Constant">1</span>, enablebp=<span class="Constant">1</span>)
+        <span class="Comment"># print(particle_list[0])</span>
+        cnt += <span class="Constant">1</span>
+        time += dt
+    fout.close()
+    endtime = datetime.datetime.now()
+    <span class="Identifier">print</span>(<span class="Constant">'</span><span class="Constant">simulation done.</span><span class="Constant">'</span>)
+    <span class="Identifier">print</span>(<span class="Constant">'</span><span class="Constant">time: </span><span class="Constant">'</span>, endtime - starttime)
+
+
+</pre>
+</body>
+</html>
+<!-- vim: set foldmethod=manual : -->
