@@ -88,14 +88,14 @@ ax.set_xlim(xmin, xmax)
 ax.set_ylim(ymin, ymax)
 ax.set_zlim(zmin, zmax)
 #test 1
-# '''
+'''
 #fixed q1
 q1 = particle_list_data[0][0]
 ax.scatter(q1.pos.x, q1.pos.y, q1.pos.z, color='green', lw=2)
 maindot = ax.scatter(particle_list_data[0][1].pos.x, particle_list_data[0][1].pos.y, particle_list_data[0][1].pos.z, color='yellow', lw=.2)
 #GIF or mp4 total time
 duration=30
-# '''
+'''
 #test 2
 '''
 ax.scatter(0, 0, 0, color='green', lw=2)
@@ -118,19 +118,41 @@ ax.plot(xarr, yarr, zarr, color='red', lw=.4)
 maindot = ax.scatter(particle_list_data[0][0].pos.x, particle_list_data[0][0].pos.y, particle_list_data[0][0].pos.z, color='blue', lw=.2)
 plt.show()
 '''
+#test 4
+# '''
+ax.scatter(0, 0, 0, color='green', lw=2)
+xarr = [particle_list_data[i][0].pos.x for i in range(len(particle_list_data))]
+yarr = [particle_list_data[i][0].pos.y for i in range(len(particle_list_data))]
+zarr = [particle_list_data[i][0].pos.z for i in range(len(particle_list_data))]
+ax.plot(xarr, yarr, zarr, color='r', lw=.4)
+maindot = ax.scatter(particle_list_data[0][0].pos.x, particle_list_data[0][0].pos.y, particle_list_data[0][0].pos.z, color='yellow', lw=.2)
+
+xarr = [particle_list_data[i][1].pos.x for i in range(len(particle_list_data))]
+yarr = [particle_list_data[i][1].pos.y for i in range(len(particle_list_data))]
+zarr = [particle_list_data[i][1].pos.z for i in range(len(particle_list_data))]
+ax.plot(xarr, yarr, zarr, color='b', lw=.4)
+maindot2 = ax.scatter(particle_list_data[0][1].pos.x, particle_list_data[0][1].pos.y, particle_list_data[0][1].pos.z, color='yellow', lw=.2)
+
+xarr = [particle_list_data[i][2].pos.x for i in range(len(particle_list_data))]
+yarr = [particle_list_data[i][2].pos.y for i in range(len(particle_list_data))]
+zarr = [particle_list_data[i][2].pos.z for i in range(len(particle_list_data))]
+ax.plot(xarr, yarr, zarr, color='g', lw=.4)
+maindot3 = ax.scatter(particle_list_data[0][2].pos.x, particle_list_data[0][2].pos.y, particle_list_data[0][2].pos.z, color='yellow', lw=.2)
+# plt.show()
+# '''
 duration = 15
 #make and save GIF or mp4
 def make_frame_mpl(t):
     ii = int(t * timeend / (duration * dt))
     #test 1
-    # '''
+    '''
     global maindot
     global tit
     maindot.remove()
     maindot = ax.scatter(particle_list_data[ii][1].pos.x, particle_list_data[ii][1].pos.y, particle_list_data[ii][1].pos.z, color='red', lw=.2, \
             label='time = %2g, dist = %2g, vel = %2g' % (t * timeend / duration, dist(particle_list_data[ii][1].pos), dist(particle_list_data[ii][1].vel)))
     ax.legend()
-    # '''
+    '''
     #test 2
     '''
     global maindot
@@ -147,6 +169,21 @@ def make_frame_mpl(t):
             label='time = %2g, vel = %2g' % (t * timeend / duration, dist(particle_list_data[ii][0].vel)))
     ax.legend()
     '''
+    #test 2
+    # '''
+    global maindot
+    maindot.remove()
+    maindot = ax.scatter(particle_list_data[ii][0].pos.x, particle_list_data[ii][0].pos.y, particle_list_data[ii][0].pos.z, color='red', lw=.2, label='v, q')
+
+    global maindot2
+    maindot2.remove()
+    maindot2 = ax.scatter(particle_list_data[ii][1].pos.x, particle_list_data[ii][1].pos.y, particle_list_data[ii][1].pos.z, color='blue', lw=.2, label='v/2, q')
+
+    global maindot3
+    maindot3.remove()
+    maindot3 = ax.scatter(particle_list_data[ii][2].pos.x, particle_list_data[ii][2].pos.y, particle_list_data[ii][2].pos.z, color='green', lw=.2, label='v, q/2')
+    ax.legend()
+    # '''
 
     return mplfig_to_npimage(fig)
 animation = mpy.VideoClip(make_frame_mpl, duration=duration)

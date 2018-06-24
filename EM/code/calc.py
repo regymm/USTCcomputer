@@ -232,7 +232,7 @@ if __name__ == '__main__':
     '''
 
     #测试2，匀强磁场磁场中简单运动
-    # '''
+    '''
     dt = .002
     trim = 25
     fout.write('%g\n' % (dt * trim))
@@ -248,7 +248,7 @@ if __name__ == '__main__':
     static_B_list.append(Bconst)
     q = particle(vec(0, 0, 0), vec(0, 1, 1), q=e, m=mp, fixed=0)
     add_particle(q)
-    # '''
+    '''
 
     #测试 3，地磁场束缚粒子，用磁荷法进行，不能满足磁场定理但大致符合事实，唯像
     '''
@@ -277,6 +277,33 @@ if __name__ == '__main__':
     add_particle(q)
     # print(get_field_B(vec(1, 0, 0), 0, enablebp=0))
     '''
+    #测试4, 多个粒子，复合场运动
+    dt = .002
+    trim = 25
+    fout.write('%g\n' % (dt * trim))
+    v = 1
+    B = 1e-8
+    timeend = 7 * 2 * math.pi * mp / (e * B)
+    print(timeend)
+    R = mp * v / (e * B)
+    print(R)
+    def B1(pos, t):
+        return vec(0, 1e-8, 0)
+    def E1(pos, t):
+        return vec(0, 1e-8, 0)
+    Bconst = field(B1)
+    Econst = field(E1)
+    static_B_list.append(Bconst)
+    static_E_list.append(Econst)
+    #r
+    q1 = particle(vec(0, 0, 0), vec(0, 0, v), q=e, m=mp, fixed=0)
+    add_particle(q1)
+    #b
+    q2 = particle(vec(0, 0, 0), vec(0, 0, v / 2), q=e, m=mp, fixed=0)
+    add_particle(q2)
+    #g
+    q3 = particle(vec(0, 0, 0), vec(0, 0, v), q=e/2, m=mp, fixed=0)
+    add_particle(q3)
 
     fout.write('%d\n' % len(particle_list))
     cnt = trim
@@ -289,7 +316,7 @@ if __name__ == '__main__':
         # q2arr[-1].pos.x = particle_list[h2].pos.x
         # q2arr[-1].pos.y = particle_list[h2].pos.y
         # q2arr[-1].pos.z = particle_list[h2].pos.z
-        update_main(time, dt, enableg=0, enableB=1, enablebp=1)
+        update_main(time, dt, enableg=0, enableB=1, enablebp=0)
         # print(particle_list[0])
         cnt += 1
         time += dt
