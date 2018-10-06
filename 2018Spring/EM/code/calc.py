@@ -283,7 +283,7 @@ if __name__ == '__main__':
     fout.write('%g\n' % (dt * trim))
     v = 1
     B = 1e-8
-    timeend = 7 * 2 * math.pi * mp / (e * B)
+    timeend = 5 * 2 * math.pi * mp / (e * B)
     print(timeend)
     R = mp * v / (e * B)
     print(R)

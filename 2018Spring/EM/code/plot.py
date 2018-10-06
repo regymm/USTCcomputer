@@ -181,7 +181,7 @@ def make_frame_mpl(t):
 
     global maindot3
     maindot3.remove()
-    maindot3 = ax.scatter(particle_list_data[ii][2].pos.x, particle_list_data[ii][2].pos.y, particle_list_data[ii][2].pos.z, color='green', lw=.2, label='v, q/2')
+    maindot3 = ax.scatter(particle_list_data[ii][2].pos.x, particle_list_data[ii][2].pos.y, particle_list_data[ii][2].pos.z, color='green', lw=.2, label='v, q/2 time = %2g' % (t * timeend / duration))
     ax.legend()
     # '''
 

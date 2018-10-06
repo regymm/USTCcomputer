@@ -1,0 +1,23 @@
+main
+6个阶段，每次read_line读入，之后
+mov %rdx,%rdi
+将返回值作为参数传给phase
+
+phase_1
+先在栈上分配8字节空间
+%rdi还是第一个参数
+%rsi???第二个参数
+调用strings_not_equal，返回值%eax是0则返回并成功，是!0则explode_bomb
+
+string_not_equal
+push
+%rdi->%rbx
+%rsi->%rbp
+%rdi length, %r12d save return value %eax
+%rbp(contain %rsi) length, return value in %eax
+%edx set as $0x1 ???
+compare %eax, %r12d (length of two parameter passed)
+	equal:jump down
+	not equal:%edx move to %eax, return, explode
+看寄存器知目标52个字符
+调用string_length，看汇编包含一个循环，是求字符串长度，不重要

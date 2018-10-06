@@ -9,4 +9,11 @@
 *.mp4
 *.png
 __pycache__
-
+*.zip
+*.7z
+*.rar
+*.gz
+*.tar
+*.xz
+Thumbs.db
+Thumbs.db:encryptable
