@@ -1,0 +1,20 @@
+mkl packaged by hzk:
+mat. mul. 
+10 time avg
+size	time(ms, 8 Cores, ?)	time 1 Core
+1000	145.25			56.25
+2000	796.875			393.75
+4000	5671.88			2942.19
+
+
+my wheels:
+mat. mul.
+naive
+type	size	time(ms)	time flaged
+ijk	1000	4909		1832(clang++ -O3)
+ikj	1000	3320		406(g++ -O3), 536(g++ -O2)
+jik	1000	3671		
+jki	1000	3680
+kij	1000	3290
+kji	1000	9051
+bijk	1000	3088		744(g++ -O3), 778(g++ -O2)

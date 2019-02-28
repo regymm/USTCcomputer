@@ -1,0 +1,18 @@
+
+O2.o:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000000000 <f>:
+   0:	8b 05 00 00 00 00    	mov    0x0(%rip),%eax        # 6 <f+0x6>
+   6:	8d 50 01             	lea    0x1(%rax),%edx
+   9:	89 15 00 00 00 00    	mov    %edx,0x0(%rip)        # f <f+0xf>
+   f:	c3                   	retq   
+
+0000000000000010 <func1>:
+  10:	8b 05 00 00 00 00    	mov    0x0(%rip),%eax        # 16 <func1+0x6>
+  16:	8d 50 04             	lea    0x4(%rax),%edx
+  19:	8d 04 85 06 00 00 00 	lea    0x6(,%rax,4),%eax
+  20:	89 15 00 00 00 00    	mov    %edx,0x0(%rip)        # 26 <func1+0x16>
+  26:	c3                   	retq   

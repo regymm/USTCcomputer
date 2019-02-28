@@ -1,0 +1,28 @@
+
+Og.o:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000000000 <f>:
+   0:	8b 05 00 00 00 00    	mov    0x0(%rip),%eax        # 6 <f+0x6>
+   6:	8d 50 01             	lea    0x1(%rax),%edx
+   9:	89 15 00 00 00 00    	mov    %edx,0x0(%rip)        # f <f+0xf>
+   f:	c3                   	retq   
+
+0000000000000010 <func1>:
+  10:	53                   	push   %rbx
+  11:	b8 00 00 00 00       	mov    $0x0,%eax
+  16:	e8 00 00 00 00       	callq  1b <func1+0xb>
+  1b:	89 c3                	mov    %eax,%ebx
+  1d:	b8 00 00 00 00       	mov    $0x0,%eax
+  22:	e8 00 00 00 00       	callq  27 <func1+0x17>
+  27:	01 c3                	add    %eax,%ebx
+  29:	b8 00 00 00 00       	mov    $0x0,%eax
+  2e:	e8 00 00 00 00       	callq  33 <func1+0x23>
+  33:	01 c3                	add    %eax,%ebx
+  35:	b8 00 00 00 00       	mov    $0x0,%eax
+  3a:	e8 00 00 00 00       	callq  3f <func1+0x2f>
+  3f:	01 d8                	add    %ebx,%eax
+  41:	5b                   	pop    %rbx
+  42:	c3                   	retq   
