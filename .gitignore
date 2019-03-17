@@ -15,6 +15,7 @@ __pycache__
 *.gz
 *.tar
 *.xz
+*.asv
 Thumbs.db
 Thumbs.db:encryptable
 .idea

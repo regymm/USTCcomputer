@@ -1,5 +1,3 @@
-
-
 # Program Optimizations(CSAPP Chapter 5, 6)
 
 **古宜民**
@@ -458,23 +456,229 @@ Linear lower: Move strlen out of loop
 
 ### Storage technologies and trends
 
+- **RAM**
+
+  ![1552790673400](C:\Users\petergu\AppData\Roaming\Typora\typora-user-images\1552790673400.png)
+
+- **Nonvolatile**
+
+  ROM, NAND, ...
+
+- **Access Main Memory**
+
+  Bus: a collection of parallel wires that carry address, data, and control signals. Shared by devices
+
+  Memory bus
+
+  Load operation `movl A,%eax`
+
+  ![1552791090698](C:\Users\petergu\AppData\Roaming\Typora\typora-user-images\1552791090698.png)
+
+  ![1552791114325](C:\Users\petergu\AppData\Roaming\Typora\typora-user-images\1552791114325.png)
+
+  ![1552791153996](C:\Users\petergu\AppData\Roaming\Typora\typora-user-images\1552791153996.png)
+
+  Store operation `movl %eax,A`
+
+  ![1552791196871](C:\Users\petergu\AppData\Roaming\Typora\typora-user-images\1552791196871.png)
+
+  ![1552791215775](C:\Users\petergu\AppData\Roaming\Typora\typora-user-images\1552791215775.png)
+
+  ![1552791238022](C:\Users\petergu\AppData\Roaming\Typora\typora-user-images\1552791238022.png)
+
+- **Hard Disk Drive**
+
+  ![1552791458243](C:\Users\petergu\AppData\Roaming\Typora\typora-user-images\1552791458243.png)
+
+  Taccess  =  Tavg seek +  Tavg rotation + Tavg transfer 
+
+  ~2500 times slower than DRAM
+
+  Logical disk blocks
+
+  I/O Bus
+
+  ![1552791563046](C:\Users\petergu\AppData\Roaming\Typora\typora-user-images\1552791563046.png)
+
+  Read HDD sector
+
+  ![1552791625187](C:\Users\petergu\AppData\Roaming\Typora\typora-user-images\1552791625187.png)
+
+  ![1552791641450](C:\Users\petergu\AppData\Roaming\Typora\typora-user-images\1552791641450.png)
+
+  ![1552791654456](C:\Users\petergu\AppData\Roaming\Typora\typora-user-images\1552791654456.png)
+
+- **Trend**
+
+  DRAM and disk performance are lagging behind CPU performance.
+
+  SRAM roughly keeping up.
+
+  Gap between DRAM and disk and CPU performance widening.
+
 ### Locality
+
+- In a program with good **temporal locality**, a memory location
+  that is referenced once is likely to be referenced again multiple times in the near
+  future. 
+
+- In a program with good **spatial locality**, if a memory location is referenced
+  once, then the program is likely to reference a nearby memory location in the near
+  future.
+
+- Programs with good locality run faster. Modern computer systems are designed to exploit locality.
+
+- Both **references to program data** and **instruction fetches** have locality
+
+- Example: 
+
+  ```c
+  sum = 0;
+  for (i = 0; i < n; i++)
+  	sum += a[i];
+  return sum;
+  ```
+
+  Array a has good spatial locality(stride-1 reference pattern)
+
+  Accumulator sum has good temporal locality(refered in each loop)
+
+  Instruction: The for loop executed in sequential memory order(spatial), and executed multiple times(temporal).
 
 ### Memory Hierachy
 
+- Fundemental hardware and software properties complement each other.
+- Storage devices get slower, bigger, and cheaper going from top to bottom
+
+- **An example**
+
+  ![1552792405981](C:\Users\petergu\AppData\Roaming\Typora\typora-user-images\1552792405981.png)
+
 ### Caches
 
+- **Cache**:  a small, fast storage device that acts as a staging area for the data objects stored in a larger, slower device
+
+- ![1552793025405](C:\Users\petergu\AppData\Roaming\Typora\typora-user-images\1552793025405.png)
+
+- **Cache Hits**
+
+- **Cache Misses**
+
+  Fetch a block from lower level. May *replace* an existing block (require a good replacement policy)
+
+  - **Kinds**
+  - *Compulsary miss (cold miss)* Won't occur after warmed up. 
+  - *Conflict miss* Cache is enough, but different blocks mapped to a same cache block, so keep missing.
+  - *Capacity miss* Working set exceeded cache capacity. Cache too small. 
+
+- Example: ubiquity of caches
+
+  ![1552793944688](C:\Users\petergu\AppData\Roaming\Typora\typora-user-images\1552793944688.png)
+
+- **Conclusion**
+
+  - Caching works, because of locality
+  - Maintaining locality is becoming more important as the memory gaps widened.
+
+### Cache Memory in brief
+
+- **Cache between CPU and DRAM**
+  - L1, L2, L3 cache. SRAM
+  - Miss rate: L1 3-10% , L2 <1%
+  - Hit time: L1 one CPU cycle, L2 3-8 cycles
+  - Miss penalty: 25-100 cycles DRAM
+
+- **Write Cache-friendly Code**
+
+  ```c
+  int sumarrayrows(int a[M][N])
+  {
+      int i, j, sum = 0;
+  
+      for (i = 0; i < M; i++)
+          for (j = 0; j < N; j++)
+              sum += a[i][j];
+      return sum;
+  } // ~1/4 miss
+  int sumarraycols(int a[M][N])
+  {
+      int i, j, sum = 0;
+  
+      for (j = 0; j < N; j++)
+          for (i = 0; i < M; i++)
+              sum += a[i][j];
+      return sum;
+  } // All miss
+  ```
+
 ### The Memory Mountain
+
+Two-dimensional function of read throughput versus temporal and spatial locality
+
+```c
+/* The test function */
+void test(int elems, int stride) {
+    int i, result = 0; 
+    volatile int sink; 
+
+    for (i = 0; i < elems; i += stride)
+	result += data[i];
+    sink = result; /* So compiler doesn't optimize away the loop */
+}
+
+/* Run test(elems, stride) and return read throughput (MB/s) */
+double run(int size, int stride, double Mhz)
+{
+    double cycles;
+    int elems = size / sizeof(int); 
+
+    test(elems, stride);                     /* warm up the cache */
+    cycles = fcyc2(test, elems, stride, 0);  /* call test(elems,stride) */
+    return (size / stride) / (cycles / Mhz); /* convert cycles to MB/s */
+}
+```
+
+Stride: spatial locality
+
+Size: temperal locality
+
+![1552795868102](C:\Users\petergu\AppData\Roaming\Typora\typora-user-images\1552795868102.png)
+
+Ridges of temporal locality
+
+![1552796089433](C:\Users\petergu\AppData\Roaming\Typora\typora-user-images\1552796089433.png)
+
+A slope of spatial locality
+
+![1552796118666](C:\Users\petergu\AppData\Roaming\Typora\typora-user-images\1552796118666.png)
 
 ### Example: Matrix-Matrix Multiplication
 
 ## Others
 
-- Find out what is slow (Bad function, huge amout I/O, nested loops, repeatous work, ...)
-- Better algorithm and datastructure
-- Better intepreter (Pypy, ...)
-- Faster language (Python modules rewriten in C/C++)
-- Parallel, multithreading/multiprocessing
-- GPU instead of CPU
-- Use library (BLAS, MKL, ...), Never use your own implementation
-- ...
+- **Real Cases: My Stupid Experiences**
+
+  - Python. Program runs slower after using multithreading.
+
+    Solution: Python's multithreading is 'fake' due to GIL and only useful when I/O is intense. Replace with multitasking accelerates the program. 
+
+  - Python & Linux. Want to generate 1M random phone number to test hash. Write one line of Python code in a script, call this one million times, `for i in seq 1 1000000; do python ./randomphone.py >> randomphone.txt; done`, extremely low performance.
+
+    Solution: Most of the time is spent on creating and destroying processes, which is a big cost.
+
+  - Memory. Bench a compression software, compress a ~1G file on HDD. >5 times speedup on the second run. 
+
+    Reason: File loaded to memory, no need to read from HDD on the second run, bench inaccurate. 
+
+  - Python. A function 
+
+- **Other Aspects and Advice**
+
+  - Find out what is slow (Bad function, huge amout I/O, nested loops,  repeatous work, ...)
+  - Better algorithm and datastructure
+  - Better intepreter (Pypy, ...)
+  - Faster language (Python modules rewriten in C/C++)
+  - Parallel, multithreading/multiprocessing
+  - GPU instead of CPU
+  - Use library (BLAS, MKL, ...), Never use your own implementation
+  - ...
