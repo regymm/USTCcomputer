@@ -2,3 +2,6 @@
 *.pptx
 *.html
 reveal.js
+!*.png
+*.pdf
+a.out
