@@ -1,4 +1,4 @@
-# Program Optimizations(CSAPP Chapter 5, 6)
+# Program Optimizations
 
 **Yimin Gu**
 
@@ -10,7 +10,7 @@ Ref：《深入理解计算机系统》
 
 部分图片和内容来自吴俊敏计算机系统详解课程PPT
 
-
+![180797](C:\Users\petergu\Downloads\180797.jpg)
 
 ## Previous
 
@@ -18,13 +18,15 @@ Ref：《深入理解计算机系统》
 
 `gcc –O1 p1.c p2.c -o p`
 
-Compile file p1.c and p2.c into executable file p, useing basic optimization.
+Compile file p1.c and p2.c into executable file p, using basic optimization.
 
 ![1552813158163](C:\Users\petergu\AppData\Roaming\Typora\typora-user-images\1552813158163.png)
 
-### Assembly
+### Assembly & Memory layout(x86-64 Linux)
 
 ![1552813449948](C:\Users\petergu\AppData\Roaming\Typora\typora-user-images\1552813449948.png)
+
+![1552813331389](C:\Users\petergu\AppData\Roaming\Typora\typora-user-images\1552813331389.png)
 
 **Move, Arithmetic, Condition codes and jumping, (Jump table), Control flow, ...**
 
@@ -33,28 +35,26 @@ Compile file p1.c and p2.c into executable file p, useing basic optimization.
 Source code, compile with `gcc -g`
 
 ```c
+int a, b, c, d;
+double aa, bb, cc, dd;
+
 void arith()
 {
-	int a, b, c, d;
 	c = a + b;
 	d = a << b;
-	double aa, bb, cc, dd;
 	cc = aa * bb;
 	dd = aa / bb;
 }
-int pointers(int* a, int* b)
+int pointers(int* pa, int* pb)
 {
-	int c;
-	c = *a;
-	*b = *a;
+	c = *pa;
 	return c;
 }
 int function(int a, int b)
 {
 	arith();
-	int c;
-	c = a + b;
-	return c;
+	pointers(&a, &b);
+	return 0x50;
 }
 int loop()
 {
@@ -66,7 +66,6 @@ int loop()
 }
 int condition(int a)
 {
-	int b;
 	if(a > 0)
 		b = 1;
 	else if(a < -1)
@@ -81,7 +80,7 @@ int main()
 }
 ```
 
-Output of `objdump -dS`
+Full output of `objdump -dS`(Don't be afraid, only some parts are useful for us), a.out compiled with no optimization. 
 
 ```assembly
 
@@ -122,9 +121,9 @@ Disassembly of section .text:
  4f9:	48 83 e4 f0          	and    $0xfffffffffffffff0,%rsp
  4fd:	50                   	push   %rax
  4fe:	54                   	push   %rsp
- 4ff:	4c 8d 05 5a 02 00 00 	lea    0x25a(%rip),%r8        # 760 <__libc_csu_fini>
- 506:	48 8d 0d e3 01 00 00 	lea    0x1e3(%rip),%rcx        # 6f0 <__libc_csu_init>
- 50d:	48 8d 3d cd 01 00 00 	lea    0x1cd(%rip),%rdi        # 6e1 <main>
+ 4ff:	4c 8d 05 9a 02 00 00 	lea    0x29a(%rip),%r8        # 7a0 <__libc_csu_fini>
+ 506:	48 8d 0d 23 02 00 00 	lea    0x223(%rip),%rcx        # 730 <__libc_csu_init>
+ 50d:	48 8d 3d 09 02 00 00 	lea    0x209(%rip),%rdi        # 71d <main>
  514:	ff 15 c6 0a 20 00    	callq  *0x200ac6(%rip)        # 200fe0 <__libc_start_main@GLIBC_2.2.5>
  51a:	f4                   	hlt    
  51b:	0f 1f 44 00 00       	nopl   0x0(%rax,%rax,1)
@@ -199,210 +198,283 @@ Disassembly of section .text:
  5f5:	e9 66 ff ff ff       	jmpq   560 <register_tm_clones>
 
 00000000000005fa <arith>:
+int a, b, c, d;
+double aa, bb, cc, dd;
+
 void arith()
 {
  5fa:	55                   	push   %rbp
  5fb:	48 89 e5             	mov    %rsp,%rbp
-	int a, b, c, d;
+//	int a, b, c, d;
 	c = a + b;
- 5fe:	8b 55 d0             	mov    -0x30(%rbp),%edx
- 601:	8b 45 d4             	mov    -0x2c(%rbp),%eax
- 604:	01 d0                	add    %edx,%eax
- 606:	89 45 d8             	mov    %eax,-0x28(%rbp)
+ 5fe:	8b 15 30 0a 20 00    	mov    0x200a30(%rip),%edx        # 201034 <a>
+ 604:	8b 05 12 0a 20 00    	mov    0x200a12(%rip),%eax        # 20101c <b>
+ 60a:	01 d0                	add    %edx,%eax
+ 60c:	89 05 1e 0a 20 00    	mov    %eax,0x200a1e(%rip)        # 201030 <c>
 	d = a << b;
- 609:	8b 45 d4             	mov    -0x2c(%rbp),%eax
- 60c:	8b 55 d0             	mov    -0x30(%rbp),%edx
- 60f:	89 c1                	mov    %eax,%ecx
- 611:	d3 e2                	shl    %cl,%edx
- 613:	89 d0                	mov    %edx,%eax
- 615:	89 45 dc             	mov    %eax,-0x24(%rbp)
-	double aa, bb, cc, dd;
+ 612:	8b 15 1c 0a 20 00    	mov    0x200a1c(%rip),%edx        # 201034 <a>
+ 618:	8b 05 fe 09 20 00    	mov    0x2009fe(%rip),%eax        # 20101c <b>
+ 61e:	89 c1                	mov    %eax,%ecx
+ 620:	d3 e2                	shl    %cl,%edx
+ 622:	89 d0                	mov    %edx,%eax
+ 624:	89 05 ee 09 20 00    	mov    %eax,0x2009ee(%rip)        # 201018 <d>
+//	double aa, bb, cc, dd;
 	cc = aa * bb;
- 618:	f2 0f 10 45 e0       	movsd  -0x20(%rbp),%xmm0
- 61d:	f2 0f 59 45 e8       	mulsd  -0x18(%rbp),%xmm0
- 622:	f2 0f 11 45 f0       	movsd  %xmm0,-0x10(%rbp)
+ 62a:	f2 0f 10 0d ee 09 20 	movsd  0x2009ee(%rip),%xmm1        # 201020 <aa>
+ 631:	00 
+ 632:	f2 0f 10 05 ee 09 20 	movsd  0x2009ee(%rip),%xmm0        # 201028 <bb>
+ 639:	00 
+ 63a:	f2 0f 59 c1          	mulsd  %xmm1,%xmm0
+ 63e:	f2 0f 11 05 f2 09 20 	movsd  %xmm0,0x2009f2(%rip)        # 201038 <cc>
+ 645:	00 
 	dd = aa / bb;
- 627:	f2 0f 10 45 e0       	movsd  -0x20(%rbp),%xmm0
- 62c:	f2 0f 5e 45 e8       	divsd  -0x18(%rbp),%xmm0
- 631:	f2 0f 11 45 f8       	movsd  %xmm0,-0x8(%rbp)
+ 646:	f2 0f 10 05 d2 09 20 	movsd  0x2009d2(%rip),%xmm0        # 201020 <aa>
+ 64d:	00 
+ 64e:	f2 0f 10 0d d2 09 20 	movsd  0x2009d2(%rip),%xmm1        # 201028 <bb>
+ 655:	00 
+ 656:	f2 0f 5e c1          	divsd  %xmm1,%xmm0
+ 65a:	f2 0f 11 05 de 09 20 	movsd  %xmm0,0x2009de(%rip)        # 201040 <dd>
+ 661:	00 
 }
- 636:	90                   	nop
- 637:	5d                   	pop    %rbp
- 638:	c3                   	retq   
+ 662:	90                   	nop
+ 663:	5d                   	pop    %rbp
+ 664:	c3                   	retq   
 
-0000000000000639 <pointers>:
-int pointers(int* a, int* b)
+0000000000000665 <pointers>:
+int pointers(int* pa, int* pb)
 {
- 639:	55                   	push   %rbp
- 63a:	48 89 e5             	mov    %rsp,%rbp
- 63d:	48 89 7d e8          	mov    %rdi,-0x18(%rbp)
- 641:	48 89 75 e0          	mov    %rsi,-0x20(%rbp)
-	int c;
-	c = *a;
- 645:	48 8b 45 e8          	mov    -0x18(%rbp),%rax
- 649:	8b 00                	mov    (%rax),%eax
- 64b:	89 45 fc             	mov    %eax,-0x4(%rbp)
-	*b = *a;
- 64e:	48 8b 45 e8          	mov    -0x18(%rbp),%rax
- 652:	8b 10                	mov    (%rax),%edx
- 654:	48 8b 45 e0          	mov    -0x20(%rbp),%rax
- 658:	89 10                	mov    %edx,(%rax)
+ 665:	55                   	push   %rbp
+ 666:	48 89 e5             	mov    %rsp,%rbp
+ 669:	48 89 7d f8          	mov    %rdi,-0x8(%rbp)
+ 66d:	48 89 75 f0          	mov    %rsi,-0x10(%rbp)
+	c = *pa;
+ 671:	48 8b 45 f8          	mov    -0x8(%rbp),%rax
+ 675:	8b 00                	mov    (%rax),%eax
+ 677:	89 05 b3 09 20 00    	mov    %eax,0x2009b3(%rip)        # 201030 <c>
 	return c;
- 65a:	8b 45 fc             	mov    -0x4(%rbp),%eax
+ 67d:	8b 05 ad 09 20 00    	mov    0x2009ad(%rip),%eax        # 201030 <c>
 }
- 65d:	5d                   	pop    %rbp
- 65e:	c3                   	retq   
+ 683:	5d                   	pop    %rbp
+ 684:	c3                   	retq   
 
-000000000000065f <function>:
+0000000000000685 <function>:
 int function(int a, int b)
 {
- 65f:	55                   	push   %rbp
- 660:	48 89 e5             	mov    %rsp,%rbp
- 663:	48 83 ec 18          	sub    $0x18,%rsp
- 667:	89 7d ec             	mov    %edi,-0x14(%rbp)
- 66a:	89 75 e8             	mov    %esi,-0x18(%rbp)
+ 685:	55                   	push   %rbp
+ 686:	48 89 e5             	mov    %rsp,%rbp
+ 689:	48 83 ec 08          	sub    $0x8,%rsp
+ 68d:	89 7d fc             	mov    %edi,-0x4(%rbp)
+ 690:	89 75 f8             	mov    %esi,-0x8(%rbp)
 	arith();
- 66d:	b8 00 00 00 00       	mov    $0x0,%eax
- 672:	e8 83 ff ff ff       	callq  5fa <arith>
-	int c;
-	c = a + b;
- 677:	8b 55 ec             	mov    -0x14(%rbp),%edx
- 67a:	8b 45 e8             	mov    -0x18(%rbp),%eax
- 67d:	01 d0                	add    %edx,%eax
- 67f:	89 45 fc             	mov    %eax,-0x4(%rbp)
-	return c;
- 682:	8b 45 fc             	mov    -0x4(%rbp),%eax
+ 693:	b8 00 00 00 00       	mov    $0x0,%eax
+ 698:	e8 5d ff ff ff       	callq  5fa <arith>
+	pointers(&a, &b);
+ 69d:	48 8d 55 f8          	lea    -0x8(%rbp),%rdx
+ 6a1:	48 8d 45 fc          	lea    -0x4(%rbp),%rax
+ 6a5:	48 89 d6             	mov    %rdx,%rsi
+ 6a8:	48 89 c7             	mov    %rax,%rdi
+ 6ab:	e8 b5 ff ff ff       	callq  665 <pointers>
+	return 0x50;
+ 6b0:	b8 50 00 00 00       	mov    $0x50,%eax
 }
- 685:	c9                   	leaveq 
- 686:	c3                   	retq   
+ 6b5:	c9                   	leaveq 
+ 6b6:	c3                   	retq   
 
-0000000000000687 <loop>:
+00000000000006b7 <loop>:
 int loop()
 {
- 687:	55                   	push   %rbp
- 688:	48 89 e5             	mov    %rsp,%rbp
+ 6b7:	55                   	push   %rbp
+ 6b8:	48 89 e5             	mov    %rsp,%rbp
 	int i;
 	int sum = 0;
- 68b:	c7 45 fc 00 00 00 00 	movl   $0x0,-0x4(%rbp)
+ 6bb:	c7 45 fc 00 00 00 00 	movl   $0x0,-0x4(%rbp)
 	for(i = 0; i < 100; i++)
- 692:	c7 45 f8 00 00 00 00 	movl   $0x0,-0x8(%rbp)
- 699:	eb 0a                	jmp    6a5 <loop+0x1e>
+ 6c2:	c7 45 f8 00 00 00 00 	movl   $0x0,-0x8(%rbp)
+ 6c9:	eb 0a                	jmp    6d5 <loop+0x1e>
 		sum += i;
- 69b:	8b 45 f8             	mov    -0x8(%rbp),%eax
- 69e:	01 45 fc             	add    %eax,-0x4(%rbp)
+ 6cb:	8b 45 f8             	mov    -0x8(%rbp),%eax
+ 6ce:	01 45 fc             	add    %eax,-0x4(%rbp)
 	for(i = 0; i < 100; i++)
- 6a1:	83 45 f8 01          	addl   $0x1,-0x8(%rbp)
- 6a5:	83 7d f8 63          	cmpl   $0x63,-0x8(%rbp)
- 6a9:	7e f0                	jle    69b <loop+0x14>
+ 6d1:	83 45 f8 01          	addl   $0x1,-0x8(%rbp)
+ 6d5:	83 7d f8 63          	cmpl   $0x63,-0x8(%rbp)
+ 6d9:	7e f0                	jle    6cb <loop+0x14>
 	return sum;
- 6ab:	8b 45 fc             	mov    -0x4(%rbp),%eax
+ 6db:	8b 45 fc             	mov    -0x4(%rbp),%eax
 }
- 6ae:	5d                   	pop    %rbp
- 6af:	c3                   	retq   
+ 6de:	5d                   	pop    %rbp
+ 6df:	c3                   	retq   
 
-00000000000006b0 <condition>:
+00000000000006e0 <condition>:
 int condition(int a)
 {
- 6b0:	55                   	push   %rbp
- 6b1:	48 89 e5             	mov    %rsp,%rbp
- 6b4:	89 7d ec             	mov    %edi,-0x14(%rbp)
-	int b;
+ 6e0:	55                   	push   %rbp
+ 6e1:	48 89 e5             	mov    %rsp,%rbp
+ 6e4:	89 7d fc             	mov    %edi,-0x4(%rbp)
 	if(a > 0)
- 6b7:	83 7d ec 00          	cmpl   $0x0,-0x14(%rbp)
- 6bb:	7e 09                	jle    6c6 <condition+0x16>
+ 6e7:	83 7d fc 00          	cmpl   $0x0,-0x4(%rbp)
+ 6eb:	7e 0c                	jle    6f9 <condition+0x19>
 		b = 1;
- 6bd:	c7 45 fc 01 00 00 00 	movl   $0x1,-0x4(%rbp)
- 6c4:	eb 16                	jmp    6dc <condition+0x2c>
+ 6ed:	c7 05 25 09 20 00 01 	movl   $0x1,0x200925(%rip)        # 20101c <b>
+ 6f4:	00 00 00 
+ 6f7:	eb 1c                	jmp    715 <condition+0x35>
 	else if(a < -1)
- 6c6:	83 7d ec ff          	cmpl   $0xffffffff,-0x14(%rbp)
- 6ca:	7d 09                	jge    6d5 <condition+0x25>
+ 6f9:	83 7d fc ff          	cmpl   $0xffffffff,-0x4(%rbp)
+ 6fd:	7d 0c                	jge    70b <condition+0x2b>
 		b = 1;
- 6cc:	c7 45 fc 01 00 00 00 	movl   $0x1,-0x4(%rbp)
- 6d3:	eb 07                	jmp    6dc <condition+0x2c>
+ 6ff:	c7 05 13 09 20 00 01 	movl   $0x1,0x200913(%rip)        # 20101c <b>
+ 706:	00 00 00 
+ 709:	eb 0a                	jmp    715 <condition+0x35>
 	else
 		b = 0;
- 6d5:	c7 45 fc 00 00 00 00 	movl   $0x0,-0x4(%rbp)
+ 70b:	c7 05 07 09 20 00 00 	movl   $0x0,0x200907(%rip)        # 20101c <b>
+ 712:	00 00 00 
 	return b;
- 6dc:	8b 45 fc             	mov    -0x4(%rbp),%eax
+ 715:	8b 05 01 09 20 00    	mov    0x200901(%rip),%eax        # 20101c <b>
 }
- 6df:	5d                   	pop    %rbp
- 6e0:	c3                   	retq   
+ 71b:	5d                   	pop    %rbp
+ 71c:	c3                   	retq   
 
-00000000000006e1 <main>:
+000000000000071d <main>:
 int main()
 {
- 6e1:	55                   	push   %rbp
- 6e2:	48 89 e5             	mov    %rsp,%rbp
+ 71d:	55                   	push   %rbp
+ 71e:	48 89 e5             	mov    %rsp,%rbp
 	return 0;
- 6e5:	b8 00 00 00 00       	mov    $0x0,%eax
+ 721:	b8 00 00 00 00       	mov    $0x0,%eax
 }
- 6ea:	5d                   	pop    %rbp
- 6eb:	c3                   	retq   
- 6ec:	0f 1f 40 00          	nopl   0x0(%rax)
-
-00000000000006f0 <__libc_csu_init>:
- 6f0:	41 57                	push   %r15
- 6f2:	41 56                	push   %r14
- 6f4:	49 89 d7             	mov    %rdx,%r15
- 6f7:	41 55                	push   %r13
- 6f9:	41 54                	push   %r12
- 6fb:	4c 8d 25 ee 06 20 00 	lea    0x2006ee(%rip),%r12        # 200df0 <__frame_dummy_init_array_entry>
- 702:	55                   	push   %rbp
- 703:	48 8d 2d ee 06 20 00 	lea    0x2006ee(%rip),%rbp        # 200df8 <__init_array_end>
- 70a:	53                   	push   %rbx
- 70b:	41 89 fd             	mov    %edi,%r13d
- 70e:	49 89 f6             	mov    %rsi,%r14
- 711:	4c 29 e5             	sub    %r12,%rbp
- 714:	48 83 ec 08          	sub    $0x8,%rsp
- 718:	48 c1 fd 03          	sar    $0x3,%rbp
- 71c:	e8 97 fd ff ff       	callq  4b8 <_init>
- 721:	48 85 ed             	test   %rbp,%rbp
- 724:	74 20                	je     746 <__libc_csu_init+0x56>
- 726:	31 db                	xor    %ebx,%ebx
+ 726:	5d                   	pop    %rbp
+ 727:	c3                   	retq   
  728:	0f 1f 84 00 00 00 00 	nopl   0x0(%rax,%rax,1)
  72f:	00 
- 730:	4c 89 fa             	mov    %r15,%rdx
- 733:	4c 89 f6             	mov    %r14,%rsi
- 736:	44 89 ef             	mov    %r13d,%edi
- 739:	41 ff 14 dc          	callq  *(%r12,%rbx,8)
- 73d:	48 83 c3 01          	add    $0x1,%rbx
- 741:	48 39 dd             	cmp    %rbx,%rbp
- 744:	75 ea                	jne    730 <__libc_csu_init+0x40>
- 746:	48 83 c4 08          	add    $0x8,%rsp
- 74a:	5b                   	pop    %rbx
- 74b:	5d                   	pop    %rbp
- 74c:	41 5c                	pop    %r12
- 74e:	41 5d                	pop    %r13
- 750:	41 5e                	pop    %r14
- 752:	41 5f                	pop    %r15
- 754:	c3                   	retq   
- 755:	90                   	nop
- 756:	66 2e 0f 1f 84 00 00 	nopw   %cs:0x0(%rax,%rax,1)
- 75d:	00 00 00 
 
-0000000000000760 <__libc_csu_fini>:
- 760:	f3 c3                	repz retq 
+0000000000000730 <__libc_csu_init>:
+ 730:	41 57                	push   %r15
+ 732:	41 56                	push   %r14
+ 734:	49 89 d7             	mov    %rdx,%r15
+ 737:	41 55                	push   %r13
+ 739:	41 54                	push   %r12
+ 73b:	4c 8d 25 ae 06 20 00 	lea    0x2006ae(%rip),%r12        # 200df0 <__frame_dummy_init_array_entry>
+ 742:	55                   	push   %rbp
+ 743:	48 8d 2d ae 06 20 00 	lea    0x2006ae(%rip),%rbp        # 200df8 <__init_array_end>
+ 74a:	53                   	push   %rbx
+ 74b:	41 89 fd             	mov    %edi,%r13d
+ 74e:	49 89 f6             	mov    %rsi,%r14
+ 751:	4c 29 e5             	sub    %r12,%rbp
+ 754:	48 83 ec 08          	sub    $0x8,%rsp
+ 758:	48 c1 fd 03          	sar    $0x3,%rbp
+ 75c:	e8 57 fd ff ff       	callq  4b8 <_init>
+ 761:	48 85 ed             	test   %rbp,%rbp
+ 764:	74 20                	je     786 <__libc_csu_init+0x56>
+ 766:	31 db                	xor    %ebx,%ebx
+ 768:	0f 1f 84 00 00 00 00 	nopl   0x0(%rax,%rax,1)
+ 76f:	00 
+ 770:	4c 89 fa             	mov    %r15,%rdx
+ 773:	4c 89 f6             	mov    %r14,%rsi
+ 776:	44 89 ef             	mov    %r13d,%edi
+ 779:	41 ff 14 dc          	callq  *(%r12,%rbx,8)
+ 77d:	48 83 c3 01          	add    $0x1,%rbx
+ 781:	48 39 dd             	cmp    %rbx,%rbp
+ 784:	75 ea                	jne    770 <__libc_csu_init+0x40>
+ 786:	48 83 c4 08          	add    $0x8,%rsp
+ 78a:	5b                   	pop    %rbx
+ 78b:	5d                   	pop    %rbp
+ 78c:	41 5c                	pop    %r12
+ 78e:	41 5d                	pop    %r13
+ 790:	41 5e                	pop    %r14
+ 792:	41 5f                	pop    %r15
+ 794:	c3                   	retq   
+ 795:	90                   	nop
+ 796:	66 2e 0f 1f 84 00 00 	nopw   %cs:0x0(%rax,%rax,1)
+ 79d:	00 00 00 
+
+00000000000007a0 <__libc_csu_fini>:
+ 7a0:	f3 c3                	repz retq 
 
 Disassembly of section .fini:
 
-0000000000000764 <_fini>:
- 764:	48 83 ec 08          	sub    $0x8,%rsp
- 768:	48 83 c4 08          	add    $0x8,%rsp
- 76c:	c3                   	retq   
-
+00000000000007a4 <_fini>:
+ 7a4:	48 83 ec 08          	sub    $0x8,%rsp
+ 7a8:	48 83 c4 08          	add    $0x8,%rsp
+ 7ac:	c3                   	retq   
 ```
 
 
-
-### Memory layout(x86-64 Linux)
-
-![1552813331389](C:\Users\petergu\AppData\Roaming\Typora\typora-user-images\1552813331389.png)
 
 ## Chap. 5 Code Optimization
 
 ### General useful optimizations
 
 ​	You or **the compiler** should do regardless of processor/compiler
+
+- **Compiler Flags**
+
+​	Previous assembly demo program compiled with -O1:
+
+
+```assembly
+00000000000005fa <arith>:
+ 5fa:	8b 05 34 0a 20 00    	mov    0x200a34(%rip),%eax        # 201034 <a>
+ 600:	8b 0d 16 0a 20 00    	mov    0x200a16(%rip),%ecx        # 20101c <b>
+ 606:	8d 14 08             	lea    (%rax,%rcx,1),%edx
+ 609:	89 15 21 0a 20 00    	mov    %edx,0x200a21(%rip)        # 201030 <c>
+ 60f:	d3 e0                	shl    %cl,%eax
+ 611:	89 05 01 0a 20 00    	mov    %eax,0x200a01(%rip)        # 201018 <d>
+ 617:	f2 0f 10 05 01 0a 20 	movsd  0x200a01(%rip),%xmm0        # 201020 <aa>
+ 61e:	00 
+ 61f:	f2 0f 10 0d 01 0a 20 	movsd  0x200a01(%rip),%xmm1        # 201028 <bb>
+ 626:	00 
+ 627:	66 0f 28 d0          	movapd %xmm0,%xmm2
+ 62b:	f2 0f 59 d1          	mulsd  %xmm1,%xmm2
+ 62f:	f2 0f 11 15 01 0a 20 	movsd  %xmm2,0x200a01(%rip)        # 201038 <cc>
+ 636:	00 
+ 637:	f2 0f 5e c1          	divsd  %xmm1,%xmm0
+ 63b:	f2 0f 11 05 fd 09 20 	movsd  %xmm0,0x2009fd(%rip)        # 201040 <dd>
+ 642:	00 
+ 643:	c3                   	retq   
+
+0000000000000644 <pointers>:
+ 644:	8b 07                	mov    (%rdi),%eax
+ 646:	89 05 e4 09 20 00    	mov    %eax,0x2009e4(%rip)        # 201030 <c>
+ 64c:	c3                   	retq   
+
+000000000000064d <function>:
+ 64d:	53                   	push   %rbx
+ 64e:	89 fb                	mov    %edi,%ebx
+ 650:	b8 00 00 00 00       	mov    $0x0,%eax
+ 655:	e8 a0 ff ff ff       	callq  5fa <arith>
+ 65a:	89 1d d0 09 20 00    	mov    %ebx,0x2009d0(%rip)        # 201030 <c>
+ 660:	b8 50 00 00 00       	mov    $0x50,%eax
+ 665:	5b                   	pop    %rbx
+ 666:	c3                   	retq   
+
+0000000000000667 <loop>:
+ 667:	b8 64 00 00 00       	mov    $0x64,%eax
+ 66c:	83 e8 01             	sub    $0x1,%eax
+ 66f:	75 fb                	jne    66c <loop+0x5>
+ 671:	b8 56 13 00 00       	mov    $0x1356,%eax
+ 676:	c3                   	retq   
+
+0000000000000677 <condition>:
+ 677:	85 ff                	test   %edi,%edi
+ 679:	7e 11                	jle    68c <condition+0x15>
+ 67b:	c7 05 97 09 20 00 01 	movl   $0x1,0x200997(%rip)        # 20101c <b>
+ 682:	00 00 00 
+ 685:	8b 05 91 09 20 00    	mov    0x200991(%rip),%eax        # 20101c <b>
+ 68b:	c3                   	retq   
+ 68c:	83 ff ff             	cmp    $0xffffffff,%edi
+ 68f:	0f 9c c0             	setl   %al
+ 692:	0f b6 c0             	movzbl %al,%eax
+ 695:	89 05 81 09 20 00    	mov    %eax,0x200981(%rip)        # 20101c <b>
+ 69b:	eb e8                	jmp    685 <condition+0xe>
+
+000000000000069d <main>:
+ 69d:	b8 00 00 00 00       	mov    $0x0,%eax
+ 6a2:	c3                   	retq   
+ 6a3:	66 2e 0f 1f 84 00 00 	nopw   %cs:0x0(%rax,%rax,1)
+ 6aa:	00 00 00 
+ 6ad:	0f 1f 00             	nopl   (%rax)
+```
+
 
 - **Code Motion** 
 
@@ -419,7 +491,7 @@ Disassembly of section .fini:
     }
   ```
 
-  gcc -Og version: n*j calculated each loop (line 0x7, 0xa)
+  `gcc -Og` version: n*j calculated each loop (line 0x7, 0xa)
 
   ```assembly
     0000000000000000 <set_row>:
@@ -455,9 +527,9 @@ Disassembly of section .fini:
   
   ```
 
-  gcc -O3 version: use ```xor %eax,%eax ``` instead of ```mov $0x0,%eax```
+  `gcc -O2` version: use ```xor %eax,%eax ``` instead of ```mov $0x0,%eax```
 
-  gcc -O3 version: (about 4-times longer code, I can't understand)
+  `gcc -O3` version: (about 4-times longer code, I can't understand)
 
 - **Reduction in Strength**
 
@@ -490,7 +562,7 @@ Disassembly of section .fini:
 
   Reuse Expressions. Example:
 
-  Three multiplications
+  Four multiplications
 
   ```c
   /* Sum neighbors of i,j */
@@ -520,7 +592,7 @@ Disassembly of section .fini:
   - Operate under fundamental constraint: Must not cause any change in program behavior (Except Undefined Behaviours)
   - Behavior that may be obvious to the programmer can  be obfuscated by languages and coding styles: variable type ranges are bigger than what you use them for.
   - Most analysis is performed only within procedures: Whole-program analysis is too expensive. Let along different files. 
-  - Most analysis is based only on static information: Runtime input cannot be predicted\
+  - Most analysis is based only on static information: Runtime input cannot be predicted.
   - Conservative all the time!
 
 - **Procedure calls**
@@ -622,7 +694,6 @@ Disassembly of section .fini:
   sum_rows1(A, B, 3);
   ```
 
-  
 
 ### Exploiting Instruction-Level Parallellism
 
@@ -704,7 +775,7 @@ Disassembly of section .fini:
 
   Performance increased.
 
-  Can this be used in multiplication? Why not? Data Dependency: those `addl`s are connected
+  Can this be used in multiplication? Why not?
 
 - **Reassociation**
 
@@ -756,7 +827,7 @@ Disassembly of section .fini:
   - Reload correct instructions (reload pipeline)
   - Cost multiple clock cycles(44 cycles on Intel Core i7). Can be major performance limiter
 
-- **Don't Care Too Much**
+- **Don't Care Too Much?**
 
   - `for(i = 0; i < 100; i++)` Only the last prediction is wrong
 
@@ -810,20 +881,29 @@ Disassembly of section .fini:
 
 ![1552265116179](C:\Users\petergu\AppData\Roaming\Typora\typora-user-images\1552265116179.png)
 
-Iter first: Use iterative function to insert elements into linked list
-Causes code to slow down
+Iter first: Use iterative function to insert elements into linked list. Causes code to slow down
+
 Iter last: Iterative function, places new entry at end of list
+
 Tend to place most common words at front of list
+
 Big table: Increase number of hash buckets
+
 Better hash: Use more sophisticated hash function
+
 Linear lower: Move strlen out of loop
 
 - **Amdahl’s Law**
   - Total time = (1-a)T + aT
+
     Component optimizing takes aT time.
+
     Improvement is factor of k, then:
+
     T_new = T_old[(1-a) + a/k]
+
     Speedup = T_old/T_new = 1/ [(1-a) + a/k]
+
     Maximum Achievable Speedup (k = Inf) = **1/(1-a)**
 
 ### Advice
@@ -831,8 +911,11 @@ Linear lower: Move strlen out of loop
 - **Good compiler and flags**
 - **Don’t do anything stupid**
   - Watch out for hidden algorithmic inefficiencies
+
   - Write compiler-friendly code
+
     Watch out for optimization blockers:  procedure calls & memory references
+
   - Look carefully at innermost loops (where most work is done)
 - Tune code for machine
 
@@ -929,7 +1012,7 @@ Linear lower: Move strlen out of loop
 
   Instruction: The for loop executed in sequential memory order(spatial), and executed multiple times(temporal).
 
-### Memory Hierachy
+### Memory Hierarchy
 
 - Fundemental hardware and software properties complement each other.
 - Storage devices get slower, bigger, and cheaper going from top to bottom
@@ -1023,7 +1106,7 @@ double run(int size, int stride, double Mhz)
 
 Stride: spatial locality
 
-Size: temperal locality
+Size: temporal locality
 
 ![1552795868102](C:\Users\petergu\AppData\Roaming\Typora\typora-user-images\1552795868102.png)
 
@@ -1038,7 +1121,7 @@ A slope of spatial locality
 ### Example: Matrix-Matrix Multiplication
 
 - Rearrange loops to increase spatial locality
-- Use blocking to increase temperal locality
+- Use blocking to increase temporal locality
 
 ![1552810647449](C:\Users\petergu\AppData\Roaming\Typora\typora-user-images\1552810647449.png)
 
@@ -1059,10 +1142,10 @@ Intel MKL 1 Core 56.25ms
 ## Others
 
 - **Other Aspects and Advice**
-  - Find out what is slow (Bad function, huge amout I/O, nested loops,  repeatous work, ...)
-  - Better algorithm and datastructure
-  - Better intepreter (Pypy, ...)
-  - Faster language (Python modules rewriten in C/C++)
+  - Find out what is slow (Bad function, huge amount I/O, nested loops,  repeatous work, ...)
+  - Better algorithm and data structure
+  - Better interpreter (PyPy, ...)
+  - Faster language (Python modules rewritten in C/C++)
   - Parallel, multithreading/multiprocessing
   - GPU instead of CPU
   - Use library (BLAS, MKL, ...), Never use your own implementation

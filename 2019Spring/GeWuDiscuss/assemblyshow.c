@@ -1,25 +1,25 @@
+int a, b, c, d;
+double aa, bb, cc, dd;
+
 void arith()
 {
-	int a, b, c, d;
+//	int a, b, c, d;
 	c = a + b;
 	d = a << b;
-	double aa, bb, cc, dd;
+//	double aa, bb, cc, dd;
 	cc = aa * bb;
 	dd = aa / bb;
 }
-int pointers(int* a, int* b)
+int pointers(int* pa, int* pb)
 {
-	int c;
-	c = *a;
-	*b = *a;
+	c = *pa;
 	return c;
 }
 int function(int a, int b)
 {
 	arith();
-	int c;
-	c = a + b;
-	return c;
+	pointers(&a, &b);
+	return 0x50;
 }
 int loop()
 {
@@ -31,7 +31,6 @@ int loop()
 }
 int condition(int a)
 {
-	int b;
 	if(a > 0)
 		b = 1;
 	else if(a < -1)

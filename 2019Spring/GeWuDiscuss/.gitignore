@@ -4,4 +4,4 @@
 reveal.js
 !*.png
 *.pdf
-a.out
+*.out
