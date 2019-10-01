@@ -3,7 +3,7 @@
  * License           : GPL-3.0-or-later
  * Author            : Yimin Gu <github.com/ustcpetergu>
  * Date              : 2019.09.29
- * Last Modified Date: 2019.09.29
+ * Last Modified Date: 2019.09.30
  * ---
  * Computational physics homework 6
  */
@@ -11,6 +11,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
 
 // some constants, as is said in hw6.md
 double A = 0.96;
@@ -25,6 +26,12 @@ double eps = 1e-5;
 double p(double x)
 {
 	return B * exp(- x * x / 2);
+}
+
+// F(x), the Lorentz-like
+double F(double x)
+{
+	return A / (1 + pow(x, 4));
 }
 
 // G is indefinite integral of F, used to calculate P
@@ -77,17 +84,27 @@ double get1()
 {
 	double alpha = (P5 - Pm5) * randreal() + Pm5;
 	double beta = Preverse(alpha);
-	double gamma = P(alpha) * randreal();
+	double gamma = F(beta) * randreal();
 	if(gamma < p(beta))
 		return beta;
 	else
-		return beta;
-		/*return 9999;*/
+		/*return beta;*/
+		return 9999;
 
 
 }
+// get a random number (p1, p2), accept resized p1 \in [-5,5] if p2*max(p) falls in [0,p(p1)]
+double get2()
+{
+	double p1 = randreal() * 10 - 5;
+	double p2 = randreal() * B;
+	if(p2 < p(p1))
+		return p1;
+	else
+		return 9999;
+}
 
-int main()
+int main(int argc, char* argv[])
 {
 	P5 = P(5);
 	Pm5 = P(-5);
@@ -98,23 +115,45 @@ int main()
 	/*printf("%lf\n", Preverse(2.1274));*/
 	srand((unsigned)time(0));
 	int i;
-	/*for(i = 0; i < 101; i++)*/
-		/*printf("%lf\n", Preverse((double)i/101 * P5));*/
-		/*printf("%lf\n", P((double) i / 10 - 5));*/
-
-	int N = 100000;
+	int N = 300000;
 	int cnt = 0;
 	double t;
-	for(i = 0; i < N; i++) {
-		t = get1();
-		if(t < 9990) {
-			printf("%lf,", t);
-			cnt++;
-		}
+	if(argc != 2) {
+		fprintf(stderr, "%s (task1|task2)\n", argv[0]);
+		exit(-2);
 	}
-
-	// calculate the efficiency
-	/*printf("%lf\n", (double)cnt / N);*/
+	else if (strcmp(argv[1], "task1") == 0) {
+		// task1: 舍选法+变换抽样
+		/*for(i = 0; i < 101; i++)*/
+			/*printf("%lf\n", Preverse((double)i/101 * P5));*/
+			/*printf("%lf\n", P((double) i / 10 - 5));*/
+		for(i = 0; i < N; i++) {
+			t = get1();
+			if(t < 9990) {
+				printf("%lf,", t);
+				cnt++;
+			}
+		}
+		// calculate the efficiency
+		// to avoid mess up with output, print this to stderr
+		fprintf(stderr, "Accept rate: %lf\n", (double)cnt / N);
+	}
+	else if(strcmp(argv[1], "task2") == 0) {
+		// task2: 直接舍选法抽样
+		for(i = 0; i < N; i++) {
+			t = get2();
+			if(t < 9990) {
+				printf("%lf,", t);
+				cnt++;
+			}
+		}
+		// calculate the efficiency
+		// to avoid mess up with output, print this to stderr
+		fprintf(stderr, "Accept rate: %lf\n", (double)cnt / N);
+	}
+	// result generation: 
+	// `./a.out task1 | sed s'/.$//' > data.csv`
+	// use the calc.nb to read the data.csv
 	return 0;
 }
 
