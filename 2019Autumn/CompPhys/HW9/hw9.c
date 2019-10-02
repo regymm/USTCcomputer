@@ -3,7 +3,7 @@
  * License           : GPL-3.0-or-later
  * Author            : Yimin Gu <github.com/ustcpetergu>
  * Date              : 2019.10.01
- * Last Modified Date: 2019.10.01
+ * Last Modified Date: 2019.10.02
  */
 #include <stdio.h>
 #include <math.h>
@@ -16,22 +16,32 @@ double randreal()
 	return (double) rand() / (RAND_MAX);
 }
 
-// first function, simulate binomial dist. 
-// expectation mu = 0.
-double f1()
-{
-	/*if(randreal() > 0.5)*/
-		/*return 1.;*/
-	/*else*/
-		/*return -1.;*/
+// first, uniform dist. in [0, 1], mu = 0.5
+double f1(){
 	return randreal();
+}
 
+
+// second function, simulate binomial dist. 
+// expectation mu = 0.5
+double f2()
+{
+	return (randreal() > 0.5) ? 0 : 1;
+
+}
+
+// third and last, Guass dist. w/ different mu and simga from std. Gauss dist. 
+double f3()
+{
+	double mu = 0;
+	double sigma = 0.1;
+	return (1 / sigma) * sqrt(-2 * log(randreal())) * cos(2 * M_PI * randreal());
 }
 
 
 void calc(int N, double f(), double mean)
 {
-	int M = 100000;
+	int M = 500000;
 	int j;
 	for(j = 0; j < M; j++) {
 		int i;
@@ -54,6 +64,8 @@ void calc(int N, double f(), double mean)
 int main(int argc, char* argv[])
 {
 	srand((unsigned)time(0));
-	calc(2, f1, 0.5);
+	/*calc(10, f1, 0.5);*/
+	/*calc(50000, f2, 0.5);*/
+	calc(50, f3, 0.);
 	return 0;
 }
