@@ -1,0 +1,15 @@
+[
+    {
+        "arguments": [
+            "g++",
+            "-c",
+            "-O2",
+            "-I/usr/include/opencv4",
+            "-o",
+            "MicroEnsemble",
+            "hw17.cpp"
+        ],
+        "directory": "/home/petergu/MyHome/USTCcomputer/2019Autumn/CompPhys/HW17",
+        "file": "hw17.cpp"
+    }
+]

@@ -1,0 +1,15 @@
+[
+    {
+        "arguments": [
+            "g++",
+            "-c",
+            "-O2",
+            "-I/usr/include/opencv4",
+            "-o",
+            "MetroMC",
+            "hw16.cpp"
+        ],
+        "directory": "/home/petergu/MyHome/USTCcomputer/2019Autumn/CompPhys/HW16",
+        "file": "hw16.cpp"
+    }
+]
