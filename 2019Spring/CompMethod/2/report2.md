@@ -23,19 +23,19 @@ N = 16  Err = 8.367272096925e-04
 其中蓝色为原函数f，橙色为插值函数。
 第一组节点：
 
-![N4type1](C:\Users\petergu\MyHome\USTCcomputer\2019Spring\CompMethod\2\N4type1.png)
+![N4type1](.\N4type1.png)
 
-![N8type1](C:\Users\petergu\MyHome\USTCcomputer\2019Spring\CompMethod\2\N8type1.png)
+![N8type1](.\N8type1.png)
 
-![N16type1](C:\Users\petergu\MyHome\USTCcomputer\2019Spring\CompMethod\2\N16type1.png)
+![N16type1](.\N16type1.png)
 
 第二组节点：
 
-![N4type2](C:\Users\petergu\MyHome\USTCcomputer\2019Spring\CompMethod\2\N4type2.png)
+![N4type2](.\N4type2.png)
 
-![N8type2](C:\Users\petergu\MyHome\USTCcomputer\2019Spring\CompMethod\2\N8type2.png)
+![N8type2](.\N8type2.png)
 
-![N16type2](C:\Users\petergu\MyHome\USTCcomputer\2019Spring\CompMethod\2\N16type2.png)
+![N16type2](.\N16type2.png)
 
 ### 2. 程序算法
 
@@ -64,7 +64,7 @@ N = 16  Err = 8.367272096925e-04
 
 对于不同次数的插值函数，可见均匀取插值节点时，在N=8时误差最小，N=4、16时误差较大。N=4时误差来自于次数太低，插值函数不能很好地反应原函数性质，偏差较大；而N=16时误差来自于在定义域边缘处出现了Runge现象，误差很大，而中间区域于原函数符合得很好。取Chebyshev节点时，N=4，8，16误差依次减小，N=16时几乎于原函数完全相同。而若取更大的N值，如N=32，则也出现了误差增大的现象。当N更大时，两种插值函数在定义域边缘处都出现了几个数量级的误差。
 
-![N32type2](C:\Users\petergu\MyHome\USTCcomputer\2019Spring\CompMethod\2\N32type2.png)
+![N32type2](.\N32type2.png)
 
 相比之下，取Chebyshev节点的插值性质明显好于取均匀节点。N=16时其与原函数几乎完全符合。并且当N过大时产生的偏差也小于均匀节点。
 

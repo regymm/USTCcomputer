@@ -6,7 +6,7 @@
 
 ### 1. 计算结果
 
-$\int_1^6sin(x)dx​$的准确计算结果为-0.419867980782， 使用不同节点数以及不同积分计算公式计算得到的结果误差以及误差阶如下：
+$\int_1^6sin(x)dx$的准确计算结果为-0.419867980782， 使用不同节点数以及不同积分计算公式计算得到的结果误差以及误差阶如下：
 
 ```
 Trapezoidal:
@@ -47,17 +47,17 @@ k = 12 , e12 = -4.450999563981e-15 d12 = 4.211216
 
 折线段为梯形积分，抛物线段为Simpson积分。
 
-$y=sin(x)​$
+$y=sin(x)$
 
-![visualizesin](C:\Users\petergu\MyHome\USTCcomputer\2019Spring\CompMethod\3\visualizesin.png)
+![visualizesin](.\visualizesin.png)
 
-![visualizesinlong](C:\Users\petergu\MyHome\USTCcomputer\2019Spring\CompMethod\3\visualizesinlong.png)
+![visualizesinlong](.\visualizesinlong.png)
 
-$y=e^x​$
+$y=e^x$
 
-![visualizeexp](C:\Users\petergu\MyHome\USTCcomputer\2019Spring\CompMethod\3\visualizeexp.png)
+![visualizeexp](.\visualizeexp.png)
 
-从图中可见，由于梯形积分是用直线段拟合被积函数，而Simpson积分是用抛物线段拟合函数，Simpson积分的拟合能够更加”贴合“函数的曲线，从而由更好的精度。当函数是凸或凹函数时，梯形积分会有系统性积分值偏大或小，导致误差很大。当然，如果函数的波动过大或增长远快于$x^2$量级（比如$e^x​$），那么两种积分方式都会由较大误差。
+从图中可见，由于梯形积分是用直线段拟合被积函数，而Simpson积分是用抛物线段拟合函数，Simpson积分的拟合能够更加”贴合“函数的曲线，从而由更好的精度。当函数是凸或凹函数时，梯形积分会有系统性积分值偏大或小，导致误差很大。当然，如果函数的波动过大或增长远快于$x^2$量级（比如$e^x$），那么两种积分方式都会由较大误差。
 
 在计算时间上，Simpson积分做了更多操作，或许相对较慢一些，但两者的时间效率在同一个数量级上，没有巨大差异。若该积分使用10000000个积分节点，则二者在笔记本电脑的MATLAB中的运行时间均为0.63s左右，没有观察到差别。
 
